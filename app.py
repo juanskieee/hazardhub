@@ -4,7 +4,465 @@ Naive Bayes classifier for AI priority classification.
 Run: python app.py
 Requires: pip install flask flask-mysqldb werkzeug
 """
+"""
+Hazard Hub – Flask Backend (Vercel-compatible)
+Naive Bayes classifier for AI priority classification.
+Database: Supabase (PostgreSQL)
+Uploads: Cloudinary
+Run: python app.py
+"""
 
+import os
+import uuid
+import json
+import math
+import re
+from datetime import datetime, timedelta
+from collections import defaultdict
+
+from flask import (
+    Flask, request, jsonify, redirect, url_for,
+    session, abort, send_from_directory
+)
+from flask_sqlalchemy import SQLAlchemy
+from werkzeug.security import generate_password_hash, check_password_hash
+
+# ─────────────────────────────────────────────
+#  App + Config
+# ─────────────────────────────────────────────
+
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
+app = Flask(__name__)
+app.secret_key = os.environ.get("SECRET_KEY", "hazardhub-stable-secret-key-2024")
+
+app.config["PERMANENT_SESSION_LIFETIME"] = timedelta(days=7)
+app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
+app.config["SESSION_COOKIE_SECURE"] = False
+app.config["SESSION_COOKIE_HTTPONLY"] = True
+
+# ── Database Config (Supabase PostgreSQL) ────────────────────
+# I-set mo ang environment variables sa Vercel dashboard
+DATABASE_URL = os.environ.get("DATABASE_URL", "")
+if DATABASE_URL:
+    # Supabase connection string format
+    app.config["SQLALCHEMY_DATABASE_URI"] = DATABASE_URL
+else:
+    # Local development fallback
+    app.config["SQLALCHEMY_DATABASE_URI"] = "postgresql://postgres:password@localhost/hazardhub"
+
+app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
+    "pool_pre_ping": True,
+    "pool_recycle": 300,
+}
+
+db = SQLAlchemy(app)
+
+# ── Cloudinary Config (File Uploads) ────────────────────────
+import cloudinary
+import cloudinary.uploader
+
+cloudinary.config(
+    cloud_name=os.environ.get("CLOUDINARY_CLOUD_NAME", "your_cloud_name"),
+    api_key=os.environ.get("CLOUDINARY_API_KEY", "your_api_key"),
+    api_secret=os.environ.get("CLOUDINARY_API_SECRET", "your_api_secret")
+)
+
+
+# ═══════════════════════════════════════════════════════════════════
+#  MODELS (SQLAlchemy)
+# ═══════════════════════════════════════════════════════════════════
+
+class User(db.Model):
+    __tablename__ = "users"
+    
+    id = db.Column(db.Integer, primary_key=True)
+    email = db.Column(db.String(255), unique=True, nullable=False)
+    password_hash = db.Column(db.String(255), nullable=False)
+    full_name = db.Column(db.String(255))
+    role = db.Column(db.String(50), default="Employee")
+    position = db.Column(db.String(255))
+    id_number = db.Column(db.String(50))
+    age = db.Column(db.Integer)
+    sex = db.Column(db.String(20))
+    civil_status = db.Column(db.String(50))
+    employment_status = db.Column(db.String(50))
+    supervisor_name = db.Column(db.String(255))
+    supervisor_position = db.Column(db.String(255))
+    profile_complete = db.Column(db.Integer, default=0)
+    profile_updated_at = db.Column(db.DateTime)
+    created_at = db.Column(db.DateTime, default=datetime.now)
+    is_active = db.Column(db.Integer, default=1)
+
+
+class HazardReport(db.Model):
+    __tablename__ = "hazard_reports"
+    
+    id = db.Column(db.Integer, primary_key=True)
+    date = db.Column(db.String(20))
+    time = db.Column(db.String(20))
+    location = db.Column(db.String(255))
+    reported_by = db.Column(db.String(255))
+    main_hazard_type = db.Column(db.String(255))
+    hazard_categories = db.Column(db.Text)
+    hazard_details = db.Column(db.Text)
+    description = db.Column(db.Text)
+    risk_level = db.Column(db.String(50))
+    ai_priority = db.Column(db.String(50))
+    nb_confidence = db.Column(db.Float)
+    nb_scores = db.Column(db.Text)
+    status = db.Column(db.String(50), default="pending")
+    photo_filename = db.Column(db.String(500))
+    submitted_by_user = db.Column(db.Integer)
+    admin_remarks = db.Column(db.Text)
+    ehs_officer = db.Column(db.String(255))
+    created_at = db.Column(db.DateTime, default=datetime.now)
+    resolved_at = db.Column(db.DateTime)
+
+
+class ConcernReport(db.Model):
+    __tablename__ = "concern_reports"
+    
+    id = db.Column(db.Integer, primary_key=True)
+    report_date = db.Column(db.String(20))
+    report_time = db.Column(db.String(20))
+    report_type = db.Column(db.String(255))
+    reported_by = db.Column(db.String(255))
+    is_anonymous = db.Column(db.Integer, default=0)
+    status = db.Column(db.String(50), default="pending")
+    incident_location = db.Column(db.String(255))
+    inspected_by = db.Column(db.String(255))
+    hazard_description = db.Column(db.Text)
+    hazard_image_path = db.Column(db.String(500))
+    risk_level = db.Column(db.String(50))
+    ai_priority = db.Column(db.String(50))
+    nb_confidence = db.Column(db.Float)
+    nb_scores = db.Column(db.Text)
+    concern_description = db.Column(db.Text)
+    suggestion_text = db.Column(db.Text)
+    admin_remarks = db.Column(db.Text)
+    ehs_officer = db.Column(db.String(255))
+    created_at = db.Column(db.DateTime, default=datetime.now)
+    resolved_at = db.Column(db.DateTime)
+
+
+class Notification(db.Model):
+    __tablename__ = "notifications"
+    
+    id = db.Column(db.Integer, primary_key=True)
+    date = db.Column(db.String(20))
+    severity = db.Column(db.String(50))
+    message = db.Column(db.Text)
+    location = db.Column(db.String(255))
+    user_id = db.Column(db.Integer)
+    is_read = db.Column(db.Integer, default=0)
+    created_at = db.Column(db.DateTime, default=datetime.now)
+
+
+class CertFolder(db.Model):
+    __tablename__ = "cert_folders"
+    
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(255), nullable=False)
+    emoji = db.Column(db.String(10), default="📁")
+    created_by = db.Column(db.Integer)
+    created_at = db.Column(db.DateTime, default=datetime.now)
+
+
+class CertFile(db.Model):
+    __tablename__ = "cert_files"
+    
+    id = db.Column(db.Integer, primary_key=True)
+    folder_id = db.Column(db.Integer, db.ForeignKey("cert_folders.id"))
+    filename = db.Column(db.String(255))
+    original_name = db.Column(db.String(255))
+    file_size = db.Column(db.String(50))
+    mime_type = db.Column(db.String(100))
+    uploaded_at = db.Column(db.DateTime, default=datetime.now)
+
+
+# ═══════════════════════════════════════════════════════════════════
+#  NAIVE BAYES CLASSIFIER
+# ═══════════════════════════════════════════════════════════════════
+
+class NaiveBayesClassifier:
+    CLASSES = ["High", "Medium", "Low"]
+    
+    TRAINING_DATA = [
+        # HIGH
+        ("fire explosion flammable chemical hazard emergency danger critical", "High"),
+        ("electrical fire exposed wire short circuit spark ignition", "High"),
+        ("toxic chemical spill gas leak dangerous fume exposure fatal", "High"),
+        ("worker injured accident fatal injury hospitalization ambulance", "High"),
+        ("radiation exposure nuclear hazardous material contamination", "High"),
+        ("building collapse structure failure emergency evacuation", "High"),
+        ("explosion risk gas leak pressure vessel rupture boiler", "High"),
+        ("severe injury broken bone fracture amputation critical condition", "High"),
+        ("electrical shock electrocution live wire unprotected circuit", "High"),
+        ("chemical burn acid alkaline corrosive exposure skin eye", "High"),
+        
+        # MEDIUM
+        ("slip trip wet floor puddle water walkway uneven surface", "Medium"),
+        ("broken equipment machinery malfunction not working needs repair", "Medium"),
+        ("ergonomic issue lifting heavy loads awkward posture strain", "Medium"),
+        ("spill minor leak needs cleanup contained area", "Medium"),
+        ("noise excessive loud machinery hearing protection required", "Medium"),
+        ("poor housekeeping cluttered workstation blocked aisle", "Medium"),
+        ("missing safety sign warning label faded unclear", "Medium"),
+        ("vibration hand arm whole body exposure repetitive", "Medium"),
+        
+        # LOW
+        ("suggestion improvement workflow process efficiency productivity", "Low"),
+        ("minor cleanliness issue trash not collected cleaning needed", "Low"),
+        ("small scratch dent minor damage cosmetic no safety risk", "Low"),
+        ("idea feedback recommendation better practice workplace", "Low"),
+        ("general concern comment feedback observation non-urgent", "Low"),
+        ("maintenance request routine scheduled preventive upkeep", "Low"),
+    ]
+    
+    def __init__(self):
+        self.class_log_priors = {}
+        self.word_log_likelihoods = {c: defaultdict(float) for c in self.CLASSES}
+        self.vocabulary = set()
+        self._train()
+    
+    @staticmethod
+    def tokenize(text):
+        text = str(text).lower()
+        text = re.sub(r"[^a-z\s]", " ", text)
+        return [w for w in text.split() if len(w) > 1]
+    
+    def _train(self):
+        class_word_lists = defaultdict(list)
+        class_doc_counts = defaultdict(int)
+        
+        for text, label in self.TRAINING_DATA:
+            tokens = self.tokenize(text)
+            class_word_lists[label].extend(tokens)
+            class_doc_counts[label] += 1
+            self.vocabulary.update(tokens)
+        
+        total_docs = sum(class_doc_counts.values())
+        vocab_size = len(self.vocabulary)
+        
+        for cls in self.CLASSES:
+            self.class_log_priors[cls] = math.log(class_doc_counts[cls] / total_docs)
+            
+            freq = defaultdict(int)
+            for word in class_word_lists[cls]:
+                freq[word] += 1
+            total_words = sum(freq.values()) + vocab_size
+            
+            for word in self.vocabulary:
+                self.word_log_likelihoods[cls][word] = math.log((freq.get(word, 0) + 1) / total_words)
+            self.word_log_likelihoods[cls]["<UNK>"] = math.log(1 / total_words)
+    
+    def predict(self, text):
+        tokens = self.tokenize(text)
+        if not tokens:
+            return {
+                "priority": "Low",
+                "confidence": 1.0,
+                "scores": {"High": 0.0, "Medium": 0.0, "Low": 1.0},
+                "algorithm": "Naive Bayes (Multinomial, Laplace smoothing)"
+            }
+        
+        log_scores = {}
+        for cls in self.CLASSES:
+            score = self.class_log_priors[cls]
+            for token in tokens:
+                ll = self.word_log_likelihoods[cls]
+                score += ll[token] if token in ll else ll["<UNK>"]
+            log_scores[cls] = score
+        
+        max_s = max(log_scores.values())
+        exps = {c: math.exp(s - max_s) for c, s in log_scores.items()}
+        total = sum(exps.values())
+        probs = {c: exps[c] / total for c in self.CLASSES}
+        
+        best = max(probs, key=probs.get)
+        return {
+            "priority": best,
+            "confidence": round(probs[best], 4),
+            "scores": {
+                "High": round(probs["High"], 4),
+                "Medium": round(probs["Medium"], 4),
+                "Low": round(probs["Low"], 4),
+            },
+            "algorithm": "Naive Bayes (Multinomial, Laplace smoothing)"
+        }
+
+
+nb_classifier = NaiveBayesClassifier()
+
+
+def classify_priority(text, hazard_type="", risk_level=""):
+    combined = " ".join(filter(None, [str(text), str(hazard_type), str(risk_level)]))
+    result = nb_classifier.predict(combined)
+    return result["priority"], result
+
+
+# ─────────────────────────────────────────────
+#  Helpers
+# ─────────────────────────────────────────────
+
+def login_required(f):
+    @functools.wraps(f)
+    def decorated(*args, **kwargs):
+        if "user_id" not in session:
+            if request.path.startswith("/api/"):
+                return jsonify({"error": "Not logged in."}), 401
+            return redirect(url_for("login_page"))
+        return f(*args, **kwargs)
+    return decorated
+
+
+def admin_required(f):
+    @functools.wraps(f)
+    def decorated(*args, **kwargs):
+        if "user_id" not in session:
+            if request.path.startswith("/api/"):
+                return jsonify({"error": "Not logged in."}), 401
+            return redirect(url_for("login_page"))
+        if session.get("role") != "Admin":
+            if request.path.startswith("/api/"):
+                return jsonify({"error": "Admin only."}), 403
+            return redirect(url_for("login_page"))
+        return f(*args, **kwargs)
+    return decorated
+
+
+import functools
+
+
+# ─────────────────────────────────────────────
+#  CORS
+# ─────────────────────────────────────────────
+
+@app.after_request
+def add_cors(response):
+    origin = request.headers.get("Origin", "")
+    allowed = ["http://localhost", "http://127.0.0.1", "null", ""]
+    if any(origin.startswith(a) for a in allowed) or origin == "null":
+        response.headers["Access-Control-Allow-Origin"] = origin or "*"
+        response.headers["Access-Control-Allow-Credentials"] = "true"
+        response.headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization"
+        response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS"
+    return response
+
+
+@app.route("/api/<path:path>", methods=["OPTIONS"])
+def handle_options(path):
+    return "", 204
+
+
+# ─────────────────────────────────────────────
+#  Pages
+# ─────────────────────────────────────────────
+
+@app.route("/")
+def index():
+    if "user_id" in session:
+        return redirect(url_for("admin_dashboard") if session.get("role") == "Admin"
+                        else url_for("employee_dashboard"))
+    return redirect(url_for("login_page"))
+
+
+@app.route("/login")
+def login_page():
+    if "user_id" in session:
+        return redirect(url_for("index"))
+    return read_html("login.html")
+
+
+@app.route("/dashboard")
+@login_required
+def admin_dashboard():
+    if session.get("role") != "Admin":
+        return redirect(url_for("login_page"))
+    return read_html("admin_dashboard.html")
+
+
+@app.route("/employee-dashboard")
+@login_required
+def employee_dashboard():
+    return "<h2>Welcome, Employee!</h2>"
+
+
+def read_html(filename):
+    path = os.path.join(BASE_DIR, filename)
+    if not os.path.isfile(path):
+        return f"<h2>Missing file: {filename}</h2><p>Place it in: {BASE_DIR}</p>", 500
+    with open(path, "r", encoding="utf-8") as f:
+        return f.read()
+
+
+# ─────────────────────────────────────────────
+#  API: Login / Logout
+# ─────────────────────────────────────────────
+
+@app.route("/api/login", methods=["POST"])
+def api_login():
+    data = request.get_json(silent=True) or {}
+    identifier = (data.get("email") or data.get("username") or "").strip()
+    password = data.get("password") or ""
+    role_filter = (data.get("role") or "").strip()
+    
+    if not identifier or not password:
+        return jsonify({"success": False, "error": "Email and password are required."}), 400
+    
+    try:
+        if role_filter:
+            user = User.query.filter_by(email=identifier.lower(), role=role_filter).first()
+        else:
+            user = User.query.filter_by(email=identifier.lower()).first()
+    except Exception as e:
+        return jsonify({"success": False, "error": f"Database error: {str(e)}"}), 500
+    
+    if not user or not check_password_hash(user.password_hash, password):
+        return jsonify({"success": False, "error": "Invalid credentials or role."}), 401
+    
+    session.permanent = True
+    session["user_id"] = user.id
+    session["email"] = user.email
+    session["role"] = user.role
+    session["full_name"] = user.full_name or ""
+    
+    redirect_url = "/dashboard" if user.role == "Admin" else "/employee-dashboard"
+    
+    return jsonify({
+        "success": True,
+        "message": "Login successful.",
+        "redirect_url": redirect_url,
+        "user": {
+            "id": user.id,
+            "email": user.email,
+            "role": user.role,
+            "full_name": user.full_name,
+            "position": user.position,
+            "id_number": user.id_number
+        }
+    }), 200
+
+
+@app.route("/api/logout", methods=["POST", "GET"])
+def api_logout():
+    session.clear()
+    return jsonify({"success": True, "message": "Logged out."}), 200
+
+
+@app.route("/logout")
+def logout():
+    session.clear()
+    return redirect(url_for("login_page"))
+
+
+@app.route("/api/me")
+@login_required
+def api_me():
+    try:
+        user = User.query.get(session.get("user
 from flask import (
     Flask, request, jsonify, redirect, url_for,
     session, abort, send_from_directory
