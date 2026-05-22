@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Hazard Hub – Login</title>
+  <title>Hazard Hub - Login</title>
   <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet"/>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -209,7 +209,7 @@
       }
 
       btn.disabled    = true;
-      btn.textContent = 'Logging in…';
+      btn.textContent = 'Logging in...';
       msgEl.className = 'msg';
 
       try {
@@ -221,9 +221,8 @@
         const data = await res.json();
 
         if (res.ok) {
-          showMsg('✓ Welcome, ' + (data.user.full_name || data.user.email) + '!', 'success');
-          btn.textContent = '✓ Success';
-          // Use window.location.replace to prevent back button from returning to login
+          showMsg('Welcome, ' + (data.user.full_name || data.user.email) + '!', 'success');
+          btn.textContent = 'Success';
           setTimeout(() => { window.location.replace(data.redirect_url || '/dashboard'); }, 900);
         } else {
           showMsg(data.error || 'Login failed.', 'error');
