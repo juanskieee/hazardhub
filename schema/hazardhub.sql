@@ -588,6 +588,7 @@ INSERT INTO `users` (`id`, `full_name`, `email`, `password_hash`, `role`, `posit
 -- (See below for the actual view)
 --
 CREATE TABLE `vw_concern_overview` (
+`id` int NOT NULL AUTO_INCREMENT PRIMARY KEY,
 `hazard_count` decimal(22,0)
 ,`suggestion_count` decimal(22,0)
 );
@@ -599,6 +600,7 @@ CREATE TABLE `vw_concern_overview` (
 -- (See below for the actual view)
 --
 CREATE TABLE `vw_dashboard_stats` (
+`id` int NOT NULL AUTO_INCREMENT PRIMARY KEY,
 `total_incidents` bigint(21)
 ,`hazards_identified` bigint(21)
 ,`resolved_incidents` bigint(21)
@@ -612,6 +614,7 @@ CREATE TABLE `vw_dashboard_stats` (
 -- (See below for the actual view)
 --
 CREATE TABLE `vw_fire_inspection_counts` (
+`id` int NOT NULL AUTO_INCREMENT PRIMARY KEY,
 `extinguisher_count` bigint(21)
 ,`light_count` bigint(21)
 ,`hose_count` bigint(21)
@@ -624,6 +627,7 @@ CREATE TABLE `vw_fire_inspection_counts` (
 -- (See below for the actual view)
 --
 CREATE TABLE `vw_hazard_concern_list` (
+`_row_id` int NOT NULL AUTO_INCREMENT PRIMARY KEY,
 `id` int(10) unsigned
 ,`date` date
 ,`time` time
@@ -641,6 +645,7 @@ CREATE TABLE `vw_hazard_concern_list` (
 -- (See below for the actual view)
 --
 CREATE TABLE `vw_incidents_per_month` (
+`id` int NOT NULL AUTO_INCREMENT PRIMARY KEY,
 `year` int(4)
 ,`month` int(2)
 ,`month_name` varchar(9)
@@ -654,6 +659,7 @@ CREATE TABLE `vw_incidents_per_month` (
 -- (See below for the actual view)
 --
 CREATE TABLE `vw_incident_summary` (
+`id` int NOT NULL AUTO_INCREMENT PRIMARY KEY,
 `classification` enum('Near Miss','First Aid','Minor','Major','Damage to Property')
 ,`total` bigint(21)
 );
@@ -665,7 +671,7 @@ CREATE TABLE `vw_incident_summary` (
 --
 DROP TABLE IF EXISTS `vw_concern_overview`;
 
-CREATE ALGORITHM=UNDEFINED DEFINER=`root`@`localhost` SQL SECURITY DEFINER VIEW `vw_concern_overview`  AS SELECT sum(case when `concern_reports`.`report_type` = 'Hazard' then 1 else 0 end) AS `hazard_count`, sum(case when `concern_reports`.`report_type` = 'Concern/Suggestion' then 1 else 0 end) AS `suggestion_count` FROM `concern_reports` ;
+CREATE ALGORITHM=UNDEFINED VIEW `vw_concern_overview`  AS SELECT sum(case when `concern_reports`.`report_type` = 'Hazard' then 1 else 0 end) AS `hazard_count`, sum(case when `concern_reports`.`report_type` = 'Concern/Suggestion' then 1 else 0 end) AS `suggestion_count` FROM `concern_reports` ;
 
 -- --------------------------------------------------------
 
@@ -674,7 +680,7 @@ CREATE ALGORITHM=UNDEFINED DEFINER=`root`@`localhost` SQL SECURITY DEFINER VIEW 
 --
 DROP TABLE IF EXISTS `vw_dashboard_stats`;
 
-CREATE ALGORITHM=UNDEFINED DEFINER=`root`@`localhost` SQL SECURITY DEFINER VIEW `vw_dashboard_stats`  AS SELECT (select count(0) from `incidents`) AS `total_incidents`, (select count(0) from `concern_reports` where `concern_reports`.`report_type` = 'Hazard') AS `hazards_identified`, (select count(0) from `incidents` where `incidents`.`status` = 'Resolved') AS `resolved_incidents`, (select count(0) from `incidents` where `incidents`.`status` in ('Open','Under Investigation')) AS `pending_incidents` ;
+CREATE ALGORITHM=UNDEFINED VIEW `vw_dashboard_stats`  AS SELECT (select count(0) from `incidents`) AS `total_incidents`, (select count(0) from `concern_reports` where `concern_reports`.`report_type` = 'Hazard') AS `hazards_identified`, (select count(0) from `incidents` where `incidents`.`status` = 'Resolved') AS `resolved_incidents`, (select count(0) from `incidents` where `incidents`.`status` in ('Open','Under Investigation')) AS `pending_incidents` ;
 
 -- --------------------------------------------------------
 
@@ -683,7 +689,7 @@ CREATE ALGORITHM=UNDEFINED DEFINER=`root`@`localhost` SQL SECURITY DEFINER VIEW 
 --
 DROP TABLE IF EXISTS `vw_fire_inspection_counts`;
 
-CREATE ALGORITHM=UNDEFINED DEFINER=`root`@`localhost` SQL SECURITY DEFINER VIEW `vw_fire_inspection_counts`  AS SELECT (select count(0) from `fire_inspection_extinguisher`) AS `extinguisher_count`, (select count(0) from `fire_inspection_light`) AS `light_count`, (select count(0) from `fire_inspection_hose`) AS `hose_count` ;
+CREATE ALGORITHM=UNDEFINED VIEW `vw_fire_inspection_counts`  AS SELECT (select count(0) from `fire_inspection_extinguisher`) AS `extinguisher_count`, (select count(0) from `fire_inspection_light`) AS `light_count`, (select count(0) from `fire_inspection_hose`) AS `hose_count` ;
 
 -- --------------------------------------------------------
 
@@ -692,7 +698,7 @@ CREATE ALGORITHM=UNDEFINED DEFINER=`root`@`localhost` SQL SECURITY DEFINER VIEW 
 --
 DROP TABLE IF EXISTS `vw_hazard_concern_list`;
 
-CREATE ALGORITHM=UNDEFINED DEFINER=`root`@`localhost` SQL SECURITY DEFINER VIEW `vw_hazard_concern_list`  AS SELECT `concern_reports`.`id` AS `id`, `concern_reports`.`report_date` AS `date`, `concern_reports`.`report_time` AS `time`, `concern_reports`.`report_type` AS `type_of_report`, `concern_reports`.`reported_by` AS `reported_by`, `concern_reports`.`status` AS `status`, `concern_reports`.`incident_location` AS `incident_location`, `concern_reports`.`inspected_by` AS `inspected_by` FROM `concern_reports` ORDER BY `concern_reports`.`report_date` DESC, `concern_reports`.`report_time` DESC ;
+CREATE ALGORITHM=UNDEFINED VIEW `vw_hazard_concern_list`  AS SELECT `concern_reports`.`id` AS `id`, `concern_reports`.`report_date` AS `date`, `concern_reports`.`report_time` AS `time`, `concern_reports`.`report_type` AS `type_of_report`, `concern_reports`.`reported_by` AS `reported_by`, `concern_reports`.`status` AS `status`, `concern_reports`.`incident_location` AS `incident_location`, `concern_reports`.`inspected_by` AS `inspected_by` FROM `concern_reports` ORDER BY `concern_reports`.`report_date` DESC, `concern_reports`.`report_time` DESC ;
 
 -- --------------------------------------------------------
 
@@ -701,7 +707,7 @@ CREATE ALGORITHM=UNDEFINED DEFINER=`root`@`localhost` SQL SECURITY DEFINER VIEW 
 --
 DROP TABLE IF EXISTS `vw_incidents_per_month`;
 
-CREATE ALGORITHM=UNDEFINED DEFINER=`root`@`localhost` SQL SECURITY DEFINER VIEW `vw_incidents_per_month`  AS SELECT year(`incidents`.`incident_date`) AS `year`, month(`incidents`.`incident_date`) AS `month`, monthname(`incidents`.`incident_date`) AS `month_name`, count(0) AS `total` FROM `incidents` GROUP BY year(`incidents`.`incident_date`), month(`incidents`.`incident_date`) ORDER BY year(`incidents`.`incident_date`) ASC, month(`incidents`.`incident_date`) ASC ;
+CREATE ALGORITHM=UNDEFINED VIEW `vw_incidents_per_month`  AS SELECT year(`incidents`.`incident_date`) AS `year`, month(`incidents`.`incident_date`) AS `month`, monthname(`incidents`.`incident_date`) AS `month_name`, count(0) AS `total` FROM `incidents` GROUP BY year(`incidents`.`incident_date`), month(`incidents`.`incident_date`) ORDER BY year(`incidents`.`incident_date`) ASC, month(`incidents`.`incident_date`) ASC ;
 
 -- --------------------------------------------------------
 
@@ -710,7 +716,7 @@ CREATE ALGORITHM=UNDEFINED DEFINER=`root`@`localhost` SQL SECURITY DEFINER VIEW 
 --
 DROP TABLE IF EXISTS `vw_incident_summary`;
 
-CREATE ALGORITHM=UNDEFINED DEFINER=`root`@`localhost` SQL SECURITY DEFINER VIEW `vw_incident_summary`  AS SELECT `incidents`.`classification` AS `classification`, count(0) AS `total` FROM `incidents` GROUP BY `incidents`.`classification` ;
+CREATE ALGORITHM=UNDEFINED VIEW `vw_incident_summary`  AS SELECT `incidents`.`classification` AS `classification`, count(0) AS `total` FROM `incidents` GROUP BY `incidents`.`classification` ;
 
 --
 -- Indexes for dumped tables
