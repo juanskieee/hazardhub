@@ -16,7 +16,7 @@
       --text-muted:#7a6010;--page-bg:#f4f4f4;--shadow:0 2px 12px rgba(0,0,0,0.10);--light-grey : #e9ecef;
     }
     body{font-family:'Nunito',sans-serif;background:var(--page-bg);min-height:100vh;display:flex;}
-    .sidebar{width:175px;min-height:100vh;background:var(--sidebar-bg);display:flex;flex-direction:column;align-items:center;padding:24px 12px;flex-shrink:0;position:fixed;top:0;left:0;bottom:0;z-index:100;}
+    .sidebar{width:175px;min-height:100vh;background:var(--sidebar-bg);display:flex;flex-direction:column;align-items:center;padding:24px 12px;flex-shrink:0;position:fixed;top:0;left:0;bottom:0;z-index:150;transition:transform .28s cubic-bezier(.4,0,.2,1);}
     .sidebar-logo{width:80px;height:80px;margin-bottom:8px;}
     .sidebar-logo svg{width:100%;height:100%;}
     .sidebar-brand{font-size:1.2rem;font-weight:900;color:var(--text-dark);text-align:center;margin-bottom:26px;}
@@ -449,6 +449,192 @@
     .settings-empty{text-align:center;padding:24px;color:#bbb;font-style:italic;font-size:.85rem;}
     .settings-search{width:100%;padding:8px 12px;border:1.5px solid #e0e0e0;border-radius:8px;font-family:'Nunito',sans-serif;font-size:.82rem;margin-bottom:10px;outline:none;}
     .settings-search:focus{border-color:var(--gold-dark);}
+
+    /* ══ MOBILE RESPONSIVENESS ══════════════════════════════════════ */
+    /* Hamburger button — hidden on desktop, shown on mobile */
+    .hamburger-btn{display:none;position:fixed;top:12px;left:12px;z-index:200;background:var(--gold);border:none;border-radius:10px;width:42px;height:42px;cursor:pointer;flex-direction:column;align-items:center;justify-content:center;gap:5px;box-shadow:0 2px 10px rgba(0,0,0,.18);}
+    .hamburger-btn span{display:block;width:22px;height:2.5px;background:var(--text-dark);border-radius:2px;transition:all .25s;}
+    .hamburger-btn.open span:nth-child(1){transform:translateY(7.5px) rotate(45deg);}
+    .hamburger-btn.open span:nth-child(2){opacity:0;transform:scaleX(0);}
+    .hamburger-btn.open span:nth-child(3){transform:translateY(-7.5px) rotate(-45deg);}
+    .sidebar-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:140;}
+    .sidebar-overlay.open{display:block;}
+
+    @media (max-width:768px){
+      /* ── Prevent ANY horizontal overflow ── */
+      html,body{overflow-x:hidden;max-width:100vw;}
+      *{box-sizing:border-box;}
+
+      body{flex-direction:column;}
+
+      /* 1. Hamburger: fixed top-left, above file-top-bar (z-index ensures it stays on top) */
+      .hamburger-btn{display:flex;top:10px;left:10px;z-index:300;}
+
+      /* 2. Font scaling with clamp() */
+      body{font-size:clamp(.78rem,2.5vw,1rem);}
+      .stat-value{font-size:clamp(1.4rem,6vw,2.4rem)!important;}
+      .fire-stat-num{font-size:clamp(1.4rem,6vw,2.8rem)!important;}
+      .concern-stat-num{font-size:clamp(1.4rem,6vw,2.6rem)!important;}
+      .section-title{font-size:clamp(.78rem,2.5vw,1.05rem);}
+      .stat-label{font-size:clamp(.70rem,2vw,.82rem);}
+      .nav-link{font-size:clamp(.80rem,2.2vw,.95rem);}
+      .table-title,.concern-table-title,.logsheet-title{font-size:clamp(.78rem,2.2vw,.95rem);}
+      h1,h2,h3{font-size:clamp(.88rem,3vw,1.1rem);}
+      .sidebar-brand{font-size:clamp(.95rem,3vw,1.2rem);}
+
+      /* 1. Button font sizes — small and consistent on mobile */
+      button,
+      .acc-add-btn,.export-btn,.print-table-btn,.filter-btn,
+      .nb-add-btn,.inv-report-btn,.btn-tpl,.btn-sub,
+      .file-tab-btn,.cert-fv-upload-btn,.acc-submit-btn,
+      .cert-modal-confirm,.cert-modal-cancel,
+      .status-modal-confirm,.status-modal-cancel,
+      .inv-back-btn,.tpl-close,.tpl-print,
+      .rpt-detail-close,.rpt-detail-print,
+      .cert-fv-back-btn,.area-chip{
+        font-size:.75rem!important;
+        padding-top:6px!important;
+        padding-bottom:6px!important;
+      }
+      .file-tab-btn{padding-left:14px!important;padding-right:14px!important;}
+      .inv-report-btn{padding-left:24px!important;padding-right:24px!important;letter-spacing:1px!important;}
+
+      /* 2. inv-rpt-empty: centre properly inside card layout */
+      .inv-rpt-empty{
+        display:flex;flex-direction:column;align-items:center;
+        justify-content:center;text-align:center;
+        padding:24px 16px;width:100%;
+      }
+      /* The td that wraps inv-rpt-empty must not apply label/flex row layout */
+      tbody td:has(.inv-rpt-empty),
+      tbody tr.empty-row td{
+        display:block!important;
+        text-align:center!important;
+        border-bottom:none!important;
+      }
+      tbody td:has(.inv-rpt-empty)::before,
+      tbody tr.empty-row td::before{content:none!important;}
+
+      /* Sidebar slides off-screen by default */
+      .sidebar{transform:translateX(-100%);z-index:150;width:220px;}
+      .sidebar.mobile-open{transform:translateX(0);}
+
+      /* Main content fills full width, no leftover margin */
+      .main{margin-left:0!important;padding:64px 12px 32px;width:100%;max-width:100vw;overflow-x:hidden;}
+
+      /* All fixed overlays that were offset 175px go full-width */
+      .inv-overlay,.tpl-overlay,.rpt-detail-overlay,.cert-folder-view-overlay,.notif-panel{left:0!important;right:0!important;}
+      .notif-panel-box{right:8px;width:calc(100vw - 16px);top:12px;}
+
+      /* All section containers must not overflow */
+      .section-box,.table-section,.concern-table-section,.logsheet-wrap,
+      .chart-full,.chart-half,.report-chart-box,.fire-overview,.concern-overview{
+        max-width:100%;overflow-x:hidden;
+      }
+
+      /* Grids */
+      .stat-grid{grid-template-columns:repeat(2,1fr);}
+      .chart-row{grid-template-columns:1fr;}
+      .fire-stat-grid{grid-template-columns:repeat(2,1fr);}
+      .concern-stat-grid{grid-template-columns:1fr 1fr;}
+      .cert-folders-grid{grid-template-columns:repeat(2,1fr);}
+
+      /* Charts must not exceed their container */
+      canvas{max-width:100%!important;height:auto!important;}
+
+      /* Report chart panel stacks */
+      .report-chart-box{flex-direction:column;}
+      .report-chart-inner{border-radius:10px 10px 0 0;}
+      .report-day-panel{width:100%;border-radius:0 0 10px 10px;border-left:none;border-top:3px solid var(--light-grey);}
+
+      /* Toolbars wrap instead of pushing width */
+      .report-toolbar,.concern-toolbar{flex-wrap:wrap;}
+      .search-bar{max-width:100%;flex:1 1 180px;}
+      .file-top-bar{flex-wrap:wrap;gap:8px;padding:12px 14px;margin:0 -12px;}
+      .file-tab-btn{padding:8px 20px;font-size:.88rem;}
+      .dash-area-filter-bar{gap:6px;flex-wrap:wrap;overflow-x:hidden;}
+
+      /* nb-data-item text must not force width */
+      .nb-data-item .txt{white-space:normal;overflow:visible;}
+
+      /* 3. Concern status breakdown — stack Hazard and Concern cards vertically */
+      .concern-status-grid{grid-template-columns:1fr!important;}
+
+      /* 4 & 6. Overflow buttons: Account "Add" and Settings "Add" */
+      /* Account toolbar: wrap to two lines */
+      #fileTabAcc [style*="space-between"]{
+        flex-wrap:wrap;gap:8px;padding:0 12px 12px;
+      }
+      /* Make nb-add-row (Settings training) stack vertically */
+      .nb-add-row{grid-template-columns:1fr!important;gap:8px;}
+      .nb-add-row input,.nb-add-row select,.nb-add-btn{width:100%;}
+
+      /* 5. Card layout: label LEFT, value RIGHT (flex row instead of column) */
+      tbody td{
+        display:flex;
+        flex-direction:row;
+        align-items:center;
+        justify-content:space-between;
+        gap:8px;
+        padding:6px 0;
+        border:none;
+        border-bottom:1px solid #f3f0e5;
+        font-size:.82rem;
+        background:transparent;
+        word-break:break-word;
+        overflow-wrap:anywhere;
+      }
+      tbody td::before{
+        content:attr(data-label);
+        font-size:.66rem;font-weight:900;
+        color:#A07800!important;
+        text-transform:uppercase;letter-spacing:.8px;
+        min-width:82px;max-width:120px;flex-shrink:0;padding-top:0;
+        text-align:left;
+      }
+      /* Value side aligns right */
+      tbody td > *,tbody td > span,tbody td > div{
+        text-align:right;flex:1;
+      }
+      tbody td:last-child{border-bottom:none;padding-bottom:0;}
+
+      /* Chips and labels with nowrap — allow wrap on mobile */
+      .area-chip{font-size:.70rem;padding:4px 10px;white-space:normal;}
+      .concern-filter-active-indicator{white-space:normal;}
+      .dash-area-filter-label{white-space:normal;}
+
+      /* Section padding */
+      .section-box{padding:12px 12px 14px;}
+
+      /* Investigation form grids collapse to 1 col */
+      .fg.c2,.fg.c3,.fg.c4,.fg.c5,
+      .rg.c2,.rg.c3,
+      .tg.c2,.tg.c3{grid-template-columns:1fr;}
+      .sig-grid,.tpl-sig-grid,.rpt-sig-grid{grid-template-columns:1fr;gap:18px;}
+      .inv-wrap,.tpl-body,.rpt-detail-body{padding-left:10px;padding-right:10px;}
+
+      /* Modals */
+      #printDialogOverlay > div{width:95vw;}
+      .status-modal-box{max-width:95vw;}
+      .acc-modal,.cert-modal-box{max-width:95vw;}
+
+      /* ── TABLE → CARD layout ── */
+      table{display:block;width:100%;}
+      thead{display:none;}
+      tbody{display:flex;flex-direction:column;gap:10px;width:100%;}
+      tbody tr{
+        display:flex;flex-direction:column;width:100%;
+        background:var(--white);border-radius:12px;
+        padding:12px 14px;
+        box-shadow:0 2px 10px rgba(0,0,0,.08);
+        border:1px solid var(--gold-pale);
+      }
+      tbody tr.empty-row{background:transparent;box-shadow:none;border:none;padding:8px;}
+    }
+
+    @media (max-width:420px){
+      .stat-grid{grid-template-columns:repeat(2,1fr);}
+    }
   </style>
 </head>
 <body>
@@ -1009,7 +1195,13 @@
 </div>
 
 <!-- SIDEBAR -->
-<aside class="sidebar">
+<!-- Mobile hamburger -->
+<button class="hamburger-btn" id="hamburgerBtn" aria-label="Toggle menu" onclick="toggleMobileSidebar()">
+  <span></span><span></span><span></span>
+</button>
+<div class="sidebar-overlay" id="sidebarOverlay" onclick="closeMobileSidebar()"></div>
+
+<aside class="sidebar" id="mainSidebar">
   <div class="sidebar-logo">
     <svg viewBox="0 0 140 140" fill="none" xmlns="http://www.w3.org/2000/svg">
       <circle cx="70" cy="70" r="62" stroke="#1a1000" stroke-width="3.5" fill="none" stroke-dasharray="8 4"/>
@@ -1515,8 +1707,8 @@ async function loadDashboard(){
   const monthly=new Array(12).fill(0);combined.forEach(r=>{const m=parseInt((r.date||'').split('-')[1])-1;if(m>=0&&m<12)monthly[m]++;});if(chartMonthly){chartMonthly.data.datasets[0].data=monthly;chartMonthly.update();}document.getElementById('dashRefreshLabel').textContent='Updated '+new Date().toLocaleTimeString();}catch(e){}
   try{const r=await fetch(`${API}/notifications`);const d=await r.json();renderDashNotifs(d.notifications||[]);}catch(e){}
 }
-function renderDashTable(items){const tb=document.getElementById('dashReportTableBody');let display=items;if(_dashAreaFilter)display=items.filter(r=>(r.location||'').toLowerCase().includes(_dashAreaFilter.toLowerCase()));if(!display||display.length===0){const msg=_dashAreaFilter?`No reports found in <strong>${_dashAreaFilter}</strong> area.`:'No reports submitted yet.';tb.innerHTML=`<tr><td colspan="7" style="text-align:center;color:#bbb;font-style:italic;padding:20px;">${msg}</td></tr>`;return;}tb.innerHTML=display.map(r=>`<tr><td>${fmtDate(r.date)}</td><td>${fmtTime(r.time)}</td><td>${escHtml(r._rtype||r.concern_type||'—')}</td><td>${escHtml(r.reported_by||'—')}</td><td>${badgePriority(r.ai_priority)}</td><td>${badgeStatus(r.status)}</td><td>${escHtml(r.location||'—')}</td></tr>`).join('');}
-function renderDashNotifs(notifs){const tb=document.getElementById('dashNotifTableBody');if(!notifs||notifs.length===0){tb.innerHTML=emptyRow(4,'No notifications.');return;}tb.innerHTML=notifs.slice(0,8).map(n=>`<tr><td>${fmtDate(n.date)}</td><td>${badgePriority(n.severity)}</td><td>${escHtml(n.message||'—')}</td><td>${escHtml(n.location||'—')}</td></tr>`).join('');}
+function renderDashTable(items){const tb=document.getElementById('dashReportTableBody');let display=items;if(_dashAreaFilter)display=items.filter(r=>(r.location||'').toLowerCase().includes(_dashAreaFilter.toLowerCase()));if(!display||display.length===0){const msg=_dashAreaFilter?`No reports found in <strong>${_dashAreaFilter}</strong> area.`:'No reports submitted yet.';tb.innerHTML=`<tr><td colspan="7" style="text-align:center;color:#bbb;font-style:italic;padding:20px;">${msg}</td></tr>`;return;}tb.innerHTML=display.map(r=>`<tr><td>${fmtDate(r.date)}</td><td>${fmtTime(r.time)}</td><td>${escHtml(r._rtype||r.concern_type||'—')}</td><td>${escHtml(r.reported_by||'—')}</td><td>${badgePriority(r.ai_priority)}</td><td>${badgeStatus(r.status)}</td><td>${escHtml(r.location||'—')}</td></tr>`).join('');if(window.stampTableLabels)window.stampTableLabels();}
+function renderDashNotifs(notifs){const tb=document.getElementById('dashNotifTableBody');if(!notifs||notifs.length===0){tb.innerHTML=emptyRow(4,'No notifications.');return;}tb.innerHTML=notifs.slice(0,8).map(n=>`<tr><td>${fmtDate(n.date)}</td><td>${badgePriority(n.severity)}</td><td>${escHtml(n.message||'—')}</td><td>${escHtml(n.location||'—')}</td></tr>`).join('');if(window.stampTableLabels)window.stampTableLabels();}
 async function loadFireStatsForChart(){try{const r=await fetch(`${API}/fire-protection/stats`);const d=await r.json();if(d.success&&chartFireMain){chartFireMain.data.datasets[0].data=[d.extinguisher_count||0,d.emergency_light_count||0,d.hose_cabinet_count||0];chartFireMain.update();}}catch(e){}}
 
 /* ═══ REPORT PAGE ═══ */
@@ -1555,9 +1747,9 @@ async function loadFirePage(){
   try{const r=await fetch(`${API}/fire-protection/stats`);const d=await r.json();if(d.success){document.getElementById('fireCount-ext').textContent=d.extinguisher_count||0;document.getElementById('fireCount-light').textContent=d.emergency_light_count||0;document.getElementById('fireCount-hose').textContent=d.hose_cabinet_count||0;}}catch(e){}
   try{const r=await fetch(`${API}/fire-protection/inspections`);const d=await r.json();if(d.success){const all=d.inspections||[];renderFireExtTable(all.filter(i=>i.inspection_type==='fire_extinguisher'));renderFireLightTable(all.filter(i=>i.inspection_type==='emergency_light'));renderFireHoseTable(all.filter(i=>i.inspection_type==='fire_hose_cabinet'));}}catch(e){}
 }
-function renderFireExtTable(rows){const tb=document.getElementById('fireExtTableBody');if(!rows||rows.length===0){tb.innerHTML=emptyRow(14,'No fire extinguisher inspections yet.');return;}tb.innerHTML=rows.map((r,i)=>`<tr><td>${i+1}</td><td>${escHtml(r.location||'—')}</td><td>${escHtml(r.extinguisher_type||'—')}</td><td>${escHtml(r.capacity||'—')}</td><td>${checkCell(r.checklist_ok,'No Obstruction')}</td><td>${checkCell(r.checklist_ok,'Label Visible')}</td><td>${checkCell(r.checklist_ok,'Safety Pin')}</td><td>${checkCell(r.checklist_ok,'Tag in Place')}</td><td>${checkCell(r.checklist_ok,'Pressure Gauge')}</td><td>${checkCell(r.checklist_ok,'No Physical Damage')}</td><td>${escHtml(r.expiry_date||'—')}</td><td>${escHtml(r.inspected_by||'—')}</td><td>${escHtml(r.inspection_date||'—')}</td><td>${escHtml(r.remark||'—')}</td></tr>`).join('');}
-function renderFireLightTable(rows){const tb=document.getElementById('fireLightTableBody');if(!rows||rows.length===0){tb.innerHTML=emptyRow(9,'No emergency light inspections yet.');return;}tb.innerHTML=rows.map((r,i)=>`<tr><td>${i+1}</td><td>${escHtml(r.location||'—')}</td><td>${checkCell(r.checklist_ok,'Designation Area')}</td><td>${checkCell(r.checklist_ok,'Good Physical Condition')}</td><td>${checkCell(r.checklist_ok,'Time of Testing')}</td><td>${checkCell(r.checklist_ok,'Lighting 1hr')}</td><td>${escHtml(r.inspected_by||'—')}</td><td>${escHtml(r.inspection_date||'—')}</td><td>${escHtml(r.remark||'—')}</td></tr>`).join('');}
-function renderFireHoseTable(rows){const tb=document.getElementById('fireHoseTableBody');if(!rows||rows.length===0){tb.innerHTML=emptyRow(12,'No fire hose cabinet inspections yet.');return;}tb.innerHTML=rows.map((r,i)=>`<tr><td>${i+1}</td><td>${escHtml(r.location||'—')}</td><td>${checkCell(r.checklist_ok,'No Obstruction')}</td><td>${checkCell(r.checklist_ok,'Glass')}</td><td>${checkCell(r.checklist_ok,'Hose')}</td><td>${checkCell(r.checklist_ok,'Nozzle')}</td><td>${checkCell(r.checklist_ok,'Axe')}</td><td>${checkCell(r.checklist_ok,'Valve')}</td><td>${checkCell(r.checklist_ok,'Cabinet')}</td><td>${escHtml(r.inspected_by||'—')}</td><td>${escHtml(r.inspection_date||'—')}</td><td>${escHtml(r.remark||'—')}</td></tr>`).join('');}
+function renderFireExtTable(rows){const tb=document.getElementById('fireExtTableBody');if(!rows||rows.length===0){tb.innerHTML=emptyRow(14,'No fire extinguisher inspections yet.');return;}tb.innerHTML=rows.map((r,i)=>`<tr><td>${i+1}</td><td>${escHtml(r.location||'—')}</td><td>${escHtml(r.extinguisher_type||'—')}</td><td>${escHtml(r.capacity||'—')}</td><td>${checkCell(r.checklist_ok,'No Obstruction')}</td><td>${checkCell(r.checklist_ok,'Label Visible')}</td><td>${checkCell(r.checklist_ok,'Safety Pin')}</td><td>${checkCell(r.checklist_ok,'Tag in Place')}</td><td>${checkCell(r.checklist_ok,'Pressure Gauge')}</td><td>${checkCell(r.checklist_ok,'No Physical Damage')}</td><td>${escHtml(r.expiry_date||'—')}</td><td>${escHtml(r.inspected_by||'—')}</td><td>${escHtml(r.inspection_date||'—')}</td><td>${escHtml(r.remark||'—')}</td></tr>`).join('');if(window.stampTableLabels)window.stampTableLabels();}
+function renderFireLightTable(rows){const tb=document.getElementById('fireLightTableBody');if(!rows||rows.length===0){tb.innerHTML=emptyRow(9,'No emergency light inspections yet.');return;}tb.innerHTML=rows.map((r,i)=>`<tr><td>${i+1}</td><td>${escHtml(r.location||'—')}</td><td>${checkCell(r.checklist_ok,'Designation Area')}</td><td>${checkCell(r.checklist_ok,'Good Physical Condition')}</td><td>${checkCell(r.checklist_ok,'Time of Testing')}</td><td>${checkCell(r.checklist_ok,'Lighting 1hr')}</td><td>${escHtml(r.inspected_by||'—')}</td><td>${escHtml(r.inspection_date||'—')}</td><td>${escHtml(r.remark||'—')}</td></tr>`).join('');if(window.stampTableLabels)window.stampTableLabels();}
+function renderFireHoseTable(rows){const tb=document.getElementById('fireHoseTableBody');if(!rows||rows.length===0){tb.innerHTML=emptyRow(12,'No fire hose cabinet inspections yet.');return;}tb.innerHTML=rows.map((r,i)=>`<tr><td>${i+1}</td><td>${escHtml(r.location||'—')}</td><td>${checkCell(r.checklist_ok,'No Obstruction')}</td><td>${checkCell(r.checklist_ok,'Glass')}</td><td>${checkCell(r.checklist_ok,'Hose')}</td><td>${checkCell(r.checklist_ok,'Nozzle')}</td><td>${checkCell(r.checklist_ok,'Axe')}</td><td>${checkCell(r.checklist_ok,'Valve')}</td><td>${checkCell(r.checklist_ok,'Cabinet')}</td><td>${escHtml(r.inspected_by||'—')}</td><td>${escHtml(r.inspection_date||'—')}</td><td>${escHtml(r.remark||'—')}</td></tr>`).join('');if(window.stampTableLabels)window.stampTableLabels();}
 function switchFireLog(type){['ext','light','hose'].forEach(id=>{document.getElementById('log-'+id).style.display='none';document.getElementById('fireCard-'+id).classList.remove('active-card');});document.getElementById('log-'+type).style.display='';document.getElementById('fireCard-'+type).classList.add('active-card');}
 function exportFireExcel(){
   const wb=XLSX.utils.book_new();
@@ -1650,6 +1842,7 @@ function renderConcernTable(items){
     const ehsTd=`<td style="font-weight:800;color:var(--gold-darker);font-size:.78rem;">${escHtml(r.ehs_officer||'—')}</td>`;
     return`<tr data-rtype="${r._rtype}" data-status="${r.status||'pending'}"><td>${fmtDate(r.date)}</td><td>${fmtTime(r.time)}</td><td>${escHtml(r._rtype)}</td><td>${escHtml(r.reported_by||'—')}</td><td>${escHtml(r.location||'—')}</td><td>${badgePriority(r.ai_priority)}</td><td>${badgeStatus(r.status)}</td>${ehsTd}${imgTd}<td><div class="action-icons"><button class="action-btn view-btn" title="View" onclick="viewConcernRow(${allConcernData.indexOf(r)})">👁</button><button class="action-btn edit-btn" title="Edit Status" onclick="openStatusModal(${allConcernData.indexOf(r)})">✏️</button></div></td></tr>`;
   }).join('');
+  if(window.stampTableLabels)window.stampTableLabels();
 }
 function viewConcernRow(idx){
   const r=allConcernData[idx];if(!r)return;
@@ -1868,7 +2061,7 @@ function switchFileTab(tab){document.getElementById('fileTabCert').style.display
 /* ═══ ACCOUNT MANAGEMENT ═══ */
 let accEditId=null;
 async function loadAccounts(){try{const r=await fetch('/api/accounts');const d=await r.json();if(!r.ok)return;renderAccTable(d);}catch(e){}}
-function renderAccTable(rows){const tb=document.getElementById('accTableBody');tb.innerHTML='';if(!rows||rows.length===0){tb.innerHTML=emptyRow(7,'No accounts yet.');return;}rows.forEach(r=>{tb.innerHTML+=`<tr><td>${escHtml(r.full_name||'')}</td><td>${escHtml(r.email||'')}</td><td>••••••••</td><td>${escHtml(r.role||'')}</td><td>${escHtml(r.position||'')}</td><td>${escHtml(r.id_number||'')}</td><td><div class="action-icons"><button class="action-btn edit-btn" onclick="openAccModal(${r.id},'${esc(r.full_name)}','${esc(r.email)}','${esc(r.role)}','${esc(r.position)}')" title="Edit">✏️</button><button class="action-btn del-btn" onclick="deleteAccount(${r.id})" title="Delete">🗑️</button></div></td></tr>`;});}
+function renderAccTable(rows){const tb=document.getElementById('accTableBody');tb.innerHTML='';if(!rows||rows.length===0){tb.innerHTML=emptyRow(7,'No accounts yet.');return;}rows.forEach(r=>{tb.innerHTML+=`<tr><td>${escHtml(r.full_name||'')}</td><td>${escHtml(r.email||'')}</td><td>••••••••</td><td>${escHtml(r.role||'')}</td><td>${escHtml(r.position||'')}</td><td>${escHtml(r.id_number||'')}</td><td><div class="action-icons"><button class="action-btn edit-btn" onclick="openAccModal(${r.id},'${esc(r.full_name)}','${esc(r.email)}','${esc(r.role)}','${esc(r.position)}')" title="Edit">✏️</button><button class="action-btn del-btn" onclick="deleteAccount(${r.id})" title="Delete">🗑️</button></div></td></tr>`;});if(window.stampTableLabels)window.stampTableLabels();}
 function esc(s){return(s||'').replace(/\\/g,'\\\\').replace(/'/g,"\\'")}
 function openAccModal(id,name,email,role,position){accEditId=id||null;document.getElementById('accModalHeader').textContent=id?'EDIT ACCOUNT':'ADD ACCOUNT';document.getElementById('accPwHint').textContent=id?'(leave blank to keep current)':'(required)';document.getElementById('accName').value=name||'';document.getElementById('accEmail').value=email||'';document.getElementById('accPassword').value='';document.getElementById('accRole').value=role||'';document.getElementById('accPosition').value=position||'';document.getElementById('accModalOverlay').classList.add('open');}
 function closeAccModal(){document.getElementById('accModalOverlay').classList.remove('open');accEditId=null;}
@@ -2372,6 +2565,59 @@ function loadSettingsPage() {
   loadNBTrainingData();
   loadSystemInfo();
 }
+
+// ── Mobile sidebar toggle ──────────────────────────────────────────
+function toggleMobileSidebar() {
+  const sidebar = document.getElementById('mainSidebar');
+  const overlay = document.getElementById('sidebarOverlay');
+  const btn = document.getElementById('hamburgerBtn');
+  const isOpen = sidebar.classList.contains('mobile-open');
+  if (isOpen) {
+    closeMobileSidebar();
+  } else {
+    sidebar.classList.add('mobile-open');
+    overlay.classList.add('open');
+    btn.classList.add('open');
+  }
+}
+function closeMobileSidebar() {
+  const sidebar = document.getElementById('mainSidebar');
+  const overlay = document.getElementById('sidebarOverlay');
+  const btn = document.getElementById('hamburgerBtn');
+  sidebar.classList.remove('mobile-open');
+  overlay.classList.remove('open');
+  btn.classList.remove('open');
+}
+// Close sidebar when a nav link is clicked on mobile
+document.querySelectorAll('.nav-link').forEach(function(link) {
+  link.addEventListener('click', function() {
+    if (window.innerWidth <= 700) closeMobileSidebar();
+  });
+});
+
+// ── Auto data-label: reads thead headers and stamps onto tbody tds ──
+function stampTableLabels() {
+  document.querySelectorAll('table').forEach(function(table) {
+    const headers = Array.from(table.querySelectorAll('thead th')).map(function(th) {
+      return th.textContent.trim();
+    });
+    if (!headers.length) return;
+    table.querySelectorAll('tbody tr').forEach(function(row) {
+      if (row.classList.contains('empty-row')) return;
+      row.querySelectorAll('td').forEach(function(td, i) {
+        td.setAttribute('data-label', headers[i] || '');
+      });
+    });
+  });
+}
+
+// Stamp on load and re-stamp after any dynamic table renders
+document.addEventListener('DOMContentLoaded', stampTableLabels);
+// Re-run after short delay to catch dynamically populated tables
+setTimeout(stampTableLabels, 800);
+setTimeout(stampTableLabels, 2000);
+// Also expose so render functions can call it
+window.stampTableLabels = stampTableLabels;
 
 </script>
 
