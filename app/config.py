@@ -18,11 +18,17 @@ class Config:
     SESSION_COOKIE_HTTPONLY = True
 
     MYSQL_HOST = os.getenv("MYSQL_HOST", "localhost")
+    MYSQL_PORT = int(os.getenv("MYSQL_PORT", "3306"))
     MYSQL_USER = os.getenv("MYSQL_USER", "root")
     MYSQL_PASSWORD = os.getenv("MYSQL_PASSWORD", "")
     MYSQL_DB = os.getenv("MYSQL_DB", "hazardhub")
     MYSQL_CURSORCLASS = "DictCursor"
     MYSQL_CHARSET = "utf8mb4"
+    MYSQL_SSL_CA = os.getenv("MYSQL_SSL_CA", "")
+    MYSQL_SSL_MODE = os.getenv("MYSQL_SSL_MODE", "")
+
+    if MYSQL_SSL_CA:
+        MYSQL_SSL = {"ca": MYSQL_SSL_CA}
 
     UPLOAD_FOLDER = str(BASE_DIR / "uploads")
     TRAINING_DATA_FILE = str(BASE_DIR / "training_data.json")
