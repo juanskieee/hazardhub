@@ -91,6 +91,20 @@
     background: var(--white); font-size: .95rem; font-family: 'Nunito', sans-serif;
     color: var(--text-dark); outline: none; margin-bottom: 12px; transition: box-shadow .2s;
   }
+  #passwordInput { padding-right: 62px; }
+  .password-wrap { position: relative; width: 100%; }
+  .toggle-btn-mobile {
+    position: absolute; right: 10px; top: 50%; transform: translateY(-50%);
+    width: 40px; height: 40px; min-width: 40px; min-height: 40px;
+    border: none; background: transparent; padding: 0;
+    display: inline-flex; align-items: center; justify-content: center; cursor: pointer; border-radius: 50%;
+    visibility: hidden; opacity: 0; transition: opacity .15s ease;
+  }
+  .toggle-btn-mobile.visible { visibility: visible; opacity: 1; }
+  .toggle-btn-mobile svg { width: 20px; height: 20px; pointer-events: none; display: block; }
+  .toggle-btn-mobile .eye-closed { display: none; }
+  .toggle-btn-mobile.open .eye-closed { display: block; }
+  .toggle-btn-mobile.open .eye-open { display: none; }
   .form-input:focus { box-shadow: 0 0 0 3px rgba(227,171,0,.45); }
   .role-row { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
   .form-select {
@@ -584,7 +598,20 @@
           <label class="form-label">Email</label>
           <input type="email" class="form-input" id="emailInput" placeholder="Enter your email">
           <label class="form-label">Password</label>
-          <input type="password" class="form-input" id="passwordInput" placeholder="Enter your password">
+          <div class="password-wrap">
+            <input type="password" class="form-input" id="passwordInput" placeholder="Enter your password">
+            <button type="button" id="togglePasswordMobile" class="toggle-btn-mobile" aria-label="Show password" title="Show password">
+              <svg class="eye-open" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                <path d="M12 5C7 5 3.1 8.1 1.5 12c1.6 3.9 5.5 7 10.5 7s8.9-3.1 10.5-7C20.9 8.1 17 5 12 5z" stroke="#1a1000" stroke-width="1.2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+                <circle cx="12" cy="12" r="3" stroke="#1a1000" stroke-width="1.2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+              <svg class="eye-closed" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+               <path d="M2 12S5.5 5 12 5s10 7 10 7-3.5 7-10 7S2 12 2 12" stroke="#1a1000"stroke-width="1.4"fill="none"stroke-linecap="round"stroke-linejoin="round"/>
+               <path d="M9 12a3 3 0 1 0 6 0a3 3 0 1 0 -6 0" stroke="#1a1000" stroke-width="1.2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+               <path d="M2 2l20 20" stroke="#1a1000" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </button>
+          </div>
           <div class="role-row">
             <label class="form-label" style="margin:0;">Role</label>
             <select class="form-select" id="roleSelect">
@@ -1663,6 +1690,39 @@ function showLoginMsg(msg, type) {
   if (type === 'error') { errEl.textContent = msg; errEl.style.display = 'block'; }
   else { sucEl.textContent = msg; sucEl.style.display = 'block'; }
 }
+// Password visibility toggle (mobile)
+(function(){
+  const toggle = document.getElementById('togglePasswordMobile');
+  const pw = document.getElementById('passwordInput');
+  if (!toggle || !pw) return;
+  function setEye(show){
+    if (show){
+      pw.type = 'text';
+      toggle.classList.add('open');
+      toggle.setAttribute('aria-label','Hide password'); toggle.title = 'Hide password';
+    } else {
+      pw.type = 'password';
+      toggle.classList.remove('open');
+      toggle.setAttribute('aria-label','Show password'); toggle.title = 'Show password';
+    }
+  }
+  function updateToggleVisibility(){
+    if (pw.value && pw.value.length > 0) toggle.classList.add('visible');
+    else toggle.classList.remove('visible');
+  }
+  function refreshToggle(){
+    updateToggleVisibility();
+    if (pw.value && pw.value.length > 0 && toggle.classList.contains('open') && pw.type === 'password') {
+      toggle.classList.remove('open');
+    }
+  }
+  // initialize
+  setEye(false);
+  updateToggleVisibility();
+  ['input', 'keyup', 'change', 'paste'].forEach(evt => pw.addEventListener(evt, updateToggleVisibility));
+  pw.addEventListener('cut', () => setTimeout(updateToggleVisibility, 0));
+  toggle.addEventListener('click', () => { setEye(pw.type === 'password'); updateToggleVisibility(); pw.focus(); });
+})();
 function updateSidebarUser() {
   if (!currentUser) return;
   const name = currentUser.full_name || '—'; const role = currentUser.role || '—';

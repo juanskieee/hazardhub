@@ -75,6 +75,8 @@
       outline: none;
       transition: box-shadow .2s;
     }
+    
+    .toggle-btn:focus { outline: 3px solid rgba(227,171,0,.45); }
     input:focus { box-shadow: 0 0 0 3px rgba(227,171,0,.55); }
 
     .role-row { display: flex; align-items: center; gap: 14px; margin-bottom: 18px; margin-top: 4px; }
@@ -196,6 +198,8 @@
       btn.style.animation = 'none';
       requestAnimationFrame(() => { btn.style.animation = 'shake .3s ease'; });
     }
+
+    
 
     async function handleLogin() {
       const email    = document.getElementById('email').value.trim();
