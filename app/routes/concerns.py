@@ -111,19 +111,21 @@ def create_concern():
         (data.get("time") or data.get("report_time") or "").strip()
         or datetime.now().strftime("%H:%M")
     )
-    report_type = (data.get("concern_type") or data.get("report_type") or "").strip()
+    incoming_report_type = (data.get("report_type") or "").strip()
+    concern_category = (data.get("concern_type") or "").strip()
+    report_type = incoming_report_type if incoming_report_type in {"Hazard", "Concern/Suggestion"} else "Concern/Suggestion"
     reported_by = (data.get("submitted_by") or data.get("reported_by") or session.get("full_name") or "").strip()
     is_anonymous = 1 if data.get("is_anonymous") else 0
     incident_location = (data.get("location") or data.get("incident_location") or "").strip()
     inspected_by = (data.get("inspected_by") or "").strip()
     hazard_desc = (data.get("hazard_description") or "").strip()
     concern_desc = (data.get("description") or data.get("concern_description") or "").strip()
-    suggestion_text = (data.get("suggestion_text") or "").strip()
+    suggestion_text = (data.get("suggestion_text") or concern_category).strip()
 
-    if not report_type:
+    if not incoming_report_type and not concern_category:
         return jsonify({"success": False, "error": "report_type / concern_type is required."}), 400
 
-    combined = " ".join(filter(None, [concern_desc, hazard_desc, report_type, suggestion_text]))
+    combined = " ".join(filter(None, [concern_desc, hazard_desc, report_type, concern_category, suggestion_text]))
     risk_level, nb_result = classify_priority(combined)
     nb_confidence = nb_result["confidence"]
     nb_scores_json = json.dumps(nb_result["scores"])

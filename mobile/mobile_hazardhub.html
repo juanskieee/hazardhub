@@ -2465,8 +2465,10 @@ async function submitConcernForm() {
   const fd = new FormData();
   fd.append('date', document.getElementById('concernDate').value);
   fd.append('time', new Date().toTimeString().slice(0,5));
+  fd.append('report_type', 'Concern/Suggestion');
   fd.append('concern_type', finalConcernType);
   fd.append('description', description);
+  fd.append('suggestion_text', finalConcernType);
   fd.append('location', document.getElementById('concernLocation').value.trim());
   fd.append('submitted_by', document.getElementById('concernSubmittedBy').value.trim());
   fd.append('is_anonymous', !document.getElementById('concernSubmittedBy').value.trim());
