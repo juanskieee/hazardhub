@@ -2307,6 +2307,9 @@ function executePrint() {
   const dateFrom = document.getElementById('printDateFrom').value;
   const dateTo   = document.getElementById('printDateTo').value;
   const status   = document.getElementById('printStatusFilter').value;
+  const location = document.getElementById('printLocationFilter')?.value || '';
+  const hazardType = document.getElementById('printHazardTypeFilter')?.value || '';
+  const priority = document.getElementById('printPriorityFilter')?.value || '';
 
   if (!dateFrom || !dateTo) { alert('Please select a date range.'); return; }
   if (dateFrom > dateTo)    { alert('Start date must be before end date.'); return; }
@@ -2315,7 +2318,7 @@ function executePrint() {
     case 'dashboard-reports': printDashboardReports(dateFrom, dateTo, status); break;
     case 'dashboard-notifs':  printDashboardNotifs(dateFrom, dateTo); break;
     case 'fire':              printFireTable(dateFrom, dateTo, status); break;
-    case 'concern':           printConcernTable(dateFrom, dateTo, status); break;
+    case 'concern':           printConcernTable(dateFrom, dateTo, status, location, hazardType, priority); break;
     case 'investigation':     printInvestigationTable(dateFrom, dateTo); break;
   }
   closePrintDialog();
@@ -2404,9 +2407,12 @@ function _badge(type, val) {
   return val;
 }
 
-function _filterBar(dateFrom, dateTo, status) {
+function _filterBar(dateFrom, dateTo, status, extraFilters) {
   let tags = `<span class="filter-tag">📅 Date: <b>${dateFrom}</b> to <b>${dateTo}</b></span>`;
   if (status) tags += `<span class="filter-tag">📌 Status: <b>${status.replace('_',' ').replace(/\b\w/g,c=>c.toUpperCase())}</b></span>`;
+  (extraFilters||[]).forEach(f=>{
+    if(f && f.label && f.value) tags += `<span class="filter-tag">${escHtml(f.label)}: <b>${escHtml(f.value)}</b></span>`;
+  });
   return `<div class="filter-bar">${tags}</div>`;
 }
 
@@ -2477,12 +2483,26 @@ function printFireTable(dateFrom, dateTo, status) {
 }
 
 // ── Hazard & Concern Reports — printed as two separate tables ──
-function printConcernTable(dateFrom, dateTo, status) {
+function _printHazardTypeLabel(value) {
+  const v = (value||'').toLowerCase();
+  if (v === 'health') return 'Health Hazard';
+  if (v === 'safety') return 'Safety Hazard';
+  return value || '';
+}
+
+function printConcernTable(dateFrom, dateTo, status, location, hazardType, priority) {
   let rows = allConcernData.filter(r => _inRange(r.date, dateFrom, dateTo));
   if (status) rows = rows.filter(r => (r.status||'pending').toLowerCase() === status);
+  if (location) rows = rows.filter(r => (r.location||'').toLowerCase() === location.toLowerCase());
+  if (hazardType) rows = rows.filter(r => r._rtype === 'Hazard' && (r.hazard_type||'').toLowerCase() === hazardType.toLowerCase());
+  if (priority) rows = rows.filter(r => (r.ai_priority||'low').toLowerCase() === priority.toLowerCase());
 
   const hazards  = rows.filter(r => r._rtype === 'Hazard');
   const concerns = rows.filter(r => r._rtype !== 'Hazard');
+  const extraFilters = [];
+  if (location) extraFilters.push({label:'Location', value:location});
+  if (hazardType) extraFilters.push({label:'Main Hazard Type', value:_printHazardTypeLabel(hazardType)});
+  if (priority) extraFilters.push({label:'Priority', value:priority.replace(/\b\w/g,c=>c.toUpperCase())});
 
   // ── Hazard table ──
   const hazardThead = `<thead><tr><th>#</th><th>Date</th><th>Reported By</th><th>Location</th><th>Main Hazard Type</th><th>Categories</th><th>Specific Details</th><th>Priority</th><th>Status</th><th>Resolved On</th><th>Duration</th><th>EHS Officer</th><th>Remarks</th></tr></thead>`;
@@ -2502,7 +2522,7 @@ function printConcernTable(dateFrom, dateTo, status) {
     <div style="font-size:.80rem;font-weight:900;color:#2a1f00;text-transform:uppercase;letter-spacing:1.5px;margin-bottom:6px;padding:6px 0;border-bottom:2px solid #E3AB00;">💭 Concern / Suggestion Reports (${concerns.length})</div>
     <table>${concernThead}<tbody>${concernTbody}</tbody></table>`;
 
-  _printWindow('Hazard & Concern/Suggestion Report', _filterBar(dateFrom,dateTo,status), tableHtml);
+  _printWindow('Hazard & Concern/Suggestion Report', _filterBar(dateFrom,dateTo,status,extraFilters), tableHtml);
 }
 
 // ── Investigation Reports ──
@@ -2781,12 +2801,33 @@ window.stampTableLabels = stampTableLabels;
         </div>
       </div>
       <div id="printStatusRow" style="display:flex;flex-direction:column;gap:6px;">
-        <label style="font-size:.72rem;font-weight:900;color:#7a6010;text-transform:uppercase;letter-spacing:1px;">Filter by Status <span style="font-size:.65rem;font-weight:600;text-transform:none;letter-spacing:0;opacity:.6;">(optional)</span></label>
+        <label style="font-size:.72rem;font-weight:900;color:#7a6010;text-transform:uppercase;letter-spacing:1px;">Status <span style="font-size:.65rem;font-weight:600;text-transform:none;letter-spacing:0;opacity:.6;">(optional)</span></label>
         <select id="printStatusFilter" style="width:100%;padding:9px 14px;border:1.5px solid #e0d8b0;border-radius:8px;font-family:'Nunito',sans-serif;font-size:.85rem;font-weight:700;color:#2a1f00;outline:none;cursor:pointer;appearance:none;background-image:url('data:image/svg+xml,%3Csvg width=10 height=7 viewBox=0 0 10 7 fill=none xmlns=http://www.w3.org/2000/svg%3E%3Cpath d=M1 1L5 5L9 1 stroke=%232a1f00 stroke-width=2/%3E%3C/svg%3E');background-repeat:no-repeat;background-position:right 12px center;" onfocus="this.style.borderColor='#C99600'" onblur="this.style.borderColor='#e0d8b0'">
           <option value="">All Statuses</option>
           <option value="pending">Pending</option>
           <option value="resolved">Resolved</option>
           <option value="rejected">Rejected</option>
+        </select>
+      </div>
+      <div id="printLocationRow" style="display:none;flex-direction:column;gap:6px;">
+        <label style="font-size:.72rem;font-weight:900;color:#7a6010;text-transform:uppercase;letter-spacing:1px;">Location <span style="font-size:.65rem;font-weight:600;text-transform:none;letter-spacing:0;opacity:.6;">(optional)</span></label>
+        <select id="printLocationFilter" style="width:100%;padding:9px 14px;border:1.5px solid #e0d8b0;border-radius:8px;font-family:'Nunito',sans-serif;font-size:.85rem;font-weight:700;color:#2a1f00;outline:none;cursor:pointer;" onfocus="this.style.borderColor='#C99600'" onblur="this.style.borderColor='#e0d8b0'">
+          <option value="">All Locations</option>
+        </select>
+      </div>
+      <div id="printHazardTypeRow" style="display:none;flex-direction:column;gap:6px;">
+        <label style="font-size:.72rem;font-weight:900;color:#7a6010;text-transform:uppercase;letter-spacing:1px;">Main Hazard Type <span style="font-size:.65rem;font-weight:600;text-transform:none;letter-spacing:0;opacity:.6;">(optional)</span></label>
+        <select id="printHazardTypeFilter" style="width:100%;padding:9px 14px;border:1.5px solid #e0d8b0;border-radius:8px;font-family:'Nunito',sans-serif;font-size:.85rem;font-weight:700;color:#2a1f00;outline:none;cursor:pointer;" onfocus="this.style.borderColor='#C99600'" onblur="this.style.borderColor='#e0d8b0'">
+          <option value="">All Main Hazard Types</option>
+        </select>
+      </div>
+      <div id="printPriorityRow" style="display:none;flex-direction:column;gap:6px;">
+        <label style="font-size:.72rem;font-weight:900;color:#7a6010;text-transform:uppercase;letter-spacing:1px;">Priority <span style="font-size:.65rem;font-weight:600;text-transform:none;letter-spacing:0;opacity:.6;">(optional)</span></label>
+        <select id="printPriorityFilter" style="width:100%;padding:9px 14px;border:1.5px solid #e0d8b0;border-radius:8px;font-family:'Nunito',sans-serif;font-size:.85rem;font-weight:700;color:#2a1f00;outline:none;cursor:pointer;" onfocus="this.style.borderColor='#C99600'" onblur="this.style.borderColor='#e0d8b0'">
+          <option value="">All Priorities</option>
+          <option value="high">High</option>
+          <option value="medium">Medium</option>
+          <option value="low">Low</option>
         </select>
       </div>
       <div style="display:flex;gap:10px;margin-top:4px;">
@@ -2800,6 +2841,27 @@ window.stampTableLabels = stampTableLabels;
 <script>
 // Show print dialog overlay using flex
 document.getElementById('printDialogOverlay').style.display = 'none';
+function _setPrintSelectOptions(selectId, values, defaultLabel, labelFn) {
+  const select = document.getElementById(selectId);
+  if (!select) return;
+  const unique = [...new Set((values||[]).filter(Boolean))].sort((a,b)=>String(a).localeCompare(String(b)));
+  select.innerHTML = `<option value="">${defaultLabel}</option>` + unique.map(v=>`<option value="${escHtml(v)}">${escHtml(labelFn ? labelFn(v) : v)}</option>`).join('');
+}
+
+function prepareConcernPrintFilters() {
+  _setPrintSelectOptions(
+    'printLocationFilter',
+    allConcernData.map(r=>r.location||'').filter(Boolean),
+    'All Locations'
+  );
+  _setPrintSelectOptions(
+    'printHazardTypeFilter',
+    allConcernData.filter(r=>r._rtype==='Hazard').map(r=>r.hazard_type||'').filter(Boolean),
+    'All Main Hazard Types',
+    _printHazardTypeLabel
+  );
+}
+
 function openPrintDialog(t) {
   _printTarget = t;
   const today = new Date();
@@ -2807,8 +2869,16 @@ function openPrintDialog(t) {
   document.getElementById('printDateFrom').value = firstDay;
   document.getElementById('printDateTo').value   = today.toISOString().split('T')[0];
   document.getElementById('printStatusFilter').value = '';
+  document.getElementById('printLocationFilter').value = '';
+  document.getElementById('printHazardTypeFilter').value = '';
+  document.getElementById('printPriorityFilter').value = '';
   const hasStatus = ['dashboard-reports','concern'].includes(t);
+  const isConcern = t === 'concern';
   document.getElementById('printStatusRow').style.display = hasStatus ? 'flex' : 'none';
+  document.getElementById('printLocationRow').style.display = isConcern ? 'flex' : 'none';
+  document.getElementById('printHazardTypeRow').style.display = isConcern ? 'flex' : 'none';
+  document.getElementById('printPriorityRow').style.display = isConcern ? 'flex' : 'none';
+  if (isConcern) prepareConcernPrintFilters();
   const labels = {
     'dashboard-reports': 'Hazard & Concern Report',
     'dashboard-notifs':  'Notification Alerts',

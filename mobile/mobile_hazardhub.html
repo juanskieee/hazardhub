@@ -192,6 +192,15 @@
   .empty-state { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 24px 16px; gap: 8px; }
   .empty-state-icon { font-size: 28px; opacity: 0.35; }
   .empty-state-text { font-size: .75rem; font-weight: 800; color: var(--text-muted); text-align: center; opacity: 0.7; font-style: italic; }
+  .report-qr-card { background: var(--white); border-radius: 10px; padding: 14px; box-shadow: var(--shadow); display: grid; grid-template-columns: 112px 1fr; gap: 12px; align-items: center; }
+  .report-qr-img-wrap { width: 112px; height: 112px; border-radius: 8px; background: #fff; border: 2px solid var(--gold-pale); padding: 6px; display: flex; align-items: center; justify-content: center; }
+  .report-qr-img { width: 100%; height: 100%; display: block; object-fit: contain; }
+  .report-qr-title { font-size: .82rem; font-weight: 900; color: var(--text-dark); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 5px; }
+  .report-qr-copy { font-size: .72rem; color: var(--text-muted); font-weight: 700; line-height: 1.35; margin-bottom: 8px; }
+  .report-qr-link { font-size: .62rem; color: var(--gold-darker); font-weight: 800; word-break: break-all; line-height: 1.25; }
+  @media (max-width: 360px) {
+    .report-qr-card { grid-template-columns: 1fr; text-align: center; justify-items: center; }
+  }
   /* Loading */
   .loading-overlay { position: absolute; inset: 0; background: var(--gold); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 200; transition: opacity 0.5s; }
   .loading-overlay.hide { opacity: 0; pointer-events: none; }
@@ -731,6 +740,19 @@
           <div class="stat-card"><div class="stat-label">Rejected</div><div class="stat-num" id="statRejected">0</div></div>
           <div class="stat-card"><div class="stat-label">Resolved</div><div class="stat-num" id="statResolved">0</div></div>
           <div class="stat-card"><div class="stat-label">Pending</div><div class="stat-num" id="statPending">0</div></div>
+        </div>
+      </div>
+      <div class="section-box">
+        <div class="section-title">Report QR Code</div>
+        <div class="report-qr-card">
+          <a class="report-qr-img-wrap" id="reportQrAnchor" href="/mobile?screen=report" target="_blank" rel="noopener">
+            <img class="report-qr-img" id="reportQrImg" alt="QR code for report page">
+          </a>
+          <div>
+            <div class="report-qr-title">Scan to Report</div>
+            <div class="report-qr-copy">Scan this QR code to open the Hazard &amp; Concern report page directly.</div>
+            <div class="report-qr-link" id="reportQrUrl">/mobile?screen=report</div>
+          </div>
         </div>
       </div>
       <div class="table-section">
@@ -1730,6 +1752,7 @@ function closeLightbox() { document.getElementById('imgLightbox').classList.remo
 const _origin = `${window.location.protocol}//${window.location.host}`;
 let API = `${_origin}/api`;
 let currentUser = null;
+let pendingReportDeepLink = false;
 
 // Automatically attach X-Client: mobile to every API request so the server
 // uses the separate mobile session cookie (hazardhub_mobile) and never
@@ -1747,8 +1770,32 @@ window.addEventListener('load', async () => {
   const today = new Date().toISOString().split('T')[0];
   document.getElementById('concernDate').value = today;
   document.getElementById('hazardDate').value = today;
+  pendingReportDeepLink = isReportDeepLink();
+  setupReportQrCode();
   checkExistingSession();
 });
+
+function getReportDeepLinkUrl() {
+  return `${window.location.origin}/mobile?screen=report`;
+}
+
+function isReportDeepLink() {
+  const params = new URLSearchParams(window.location.search);
+  const screen = (params.get('screen') || params.get('page') || '').toLowerCase();
+  const hash = (window.location.hash || '').replace('#','').toLowerCase();
+  return screen === 'report' || hash === 'report';
+}
+
+function setupReportQrCode() {
+  const reportUrl = getReportDeepLinkUrl();
+  const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=220x220&margin=10&data=${encodeURIComponent(reportUrl)}`;
+  const img = document.getElementById('reportQrImg');
+  const anchor = document.getElementById('reportQrAnchor');
+  const text = document.getElementById('reportQrUrl');
+  if (img) img.src = qrUrl;
+  if (anchor) anchor.href = reportUrl;
+  if (text) text.textContent = reportUrl;
+}
 
 async function checkExistingSession() {
   // No localStorage — trust the server session cookie entirely.
@@ -1768,7 +1815,10 @@ async function checkExistingSession() {
 }
 function routeAfterLogin() {
   if (currentUser && currentUser.role === 'Admin') showAdminDashboard();
-  else showDashboard();
+  else if (pendingReportDeepLink || isReportDeepLink()) {
+    pendingReportDeepLink = false;
+    showReportChoice();
+  } else showDashboard();
   setTimeout(() => checkExpiryAlerts(), 1000);
 }
 async function handleLogin() {
