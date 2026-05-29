@@ -2368,9 +2368,17 @@ async function loadEmpDashboard() {
   try {
     const [hRes, cRes] = await Promise.all([fetch(`${API}/hazards`, { credentials: 'include' }), fetch(`${API}/concerns`, { credentials: 'include' })]);
     const hData = await hRes.json(); const cData = await cRes.json();
+    const hazards = hData.hazards || [];
     const concerns = cData.concerns || [];
+    const allReports = [...hazards, ...concerns];
+    const countStatus = status => allReports.filter(r => (r.status || 'pending').toLowerCase() === status).length;
+    document.getElementById('statIncidents').textContent = allReports.length;
+    document.getElementById('statHazards').textContent = hazards.length;
     document.getElementById('statConcerns').textContent = concerns.length;
-    const combined = [...(hData.hazards||[]).map(r=>({...r,_type:'Hazard'})).slice(0,3), ...(concerns).map(r=>({...r,_type:r.concern_type||'Concern'})).slice(0,2)];
+    document.getElementById('statRejected').textContent = countStatus('rejected');
+    document.getElementById('statResolved').textContent = countStatus('resolved');
+    document.getElementById('statPending').textContent = countStatus('pending');
+    const combined = [...hazards.map(r=>({...r,_type:'Hazard'})).slice(0,3), ...(concerns).map(r=>({...r,_type:r.concern_type||'Concern'})).slice(0,2)];
     window._empReportData = combined;
     const tbody = document.getElementById('hazardTableBody');
     if (!combined.length) { tbody.innerHTML = `<tr><td colspan="6"><div class="empty-state"><span class="empty-state-icon">📋</span><span class="empty-state-text">No reports yet.</span></div></td></tr>`; }
