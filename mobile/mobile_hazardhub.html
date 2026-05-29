@@ -27,6 +27,7 @@
     --success: #2e7d32;
     --shadow: 0 2px 12px rgba(0,0,0,0.10);
     --light-grey : #e9ecef;
+    --black : #000000;
   }
 
   * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -180,7 +181,7 @@
   .mobile-table-scroll .mini-table, .mobile-table-scroll .notif-table { min-width: 520px; }
   .mobile-table-scroll thead th { position: sticky; top: 0; z-index: 1; }
   .mini-table { width: 100%; border-collapse: collapse; font-size: .70rem; }
-  .mini-table thead th { background: var(--gold-panel); color: var(--gold-dark); padding: 7px 5px; text-align: center; font-weight: 800; font-size: .65rem; text-transform: uppercase; border: 1px solid var(--gold-pale); }
+  .mini-table thead th { background: var(--gold-panel); color: var(--text-dark); padding: 7px 5px; text-align: center; font-weight: 800; font-size: .65rem; text-transform: uppercase; border: 1px solid var(--gold-pale); }
   .mini-table tbody td { padding: 7px 5px; text-align: center; border: 1px solid var(--gold-pale); background: var(--white); color: var(--text-dark); font-weight: 600; }
   .badge { padding: 2px 7px; border-radius: 20px; font-size: .62rem; font-weight: 800; }
   .badge-high { background: #fde8e8; color: var(--danger); }
@@ -192,7 +193,7 @@
   .badge-inprog { background: #fff3cd; color: #856404; }
   .badge-rejected { background: #f8d7da; color: #721c24; }
   .notif-table { width: 100%; border-collapse: collapse; font-size: .70rem; }
-  .notif-table thead th { background: var(--gold-panel); color: var(--gold-dark); padding: 7px 5px; font-weight: 800; font-size: .65rem; text-transform: uppercase; border: 1px solid var(--gold-pale); text-align: center; }
+  .notif-table thead th { background: var(--gold-panel); color: var(--text-dark); padding: 7px 5px; font-weight: 800; font-size: .65rem; text-transform: uppercase; border: 1px solid var(--gold-pale); text-align: center; }
   .notif-table tbody td { padding: 7px 5px; border: 1px solid var(--gold-pale); background: var(--white); color: var(--text-dark); font-weight: 600; text-align: center; font-size: .66rem; }
   .empty-state { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 24px 16px; gap: 8px; }
   .empty-state-icon { font-size: 28px; opacity: 0.35; }
@@ -948,7 +949,7 @@
       <div class="report-intro-card"><div class="report-intro-title">Choose What You<br>Want to Report</div><div class="report-intro-subtitle">Help improve workplace safety by reporting hazards or concerns.</div></div>
       <div class="report-options-card">
         <button class="report-option-btn" onclick="showHazardForm()"><div class="report-option-icon">⚠️</div><div class="report-option-title">Hazard</div><div class="report-option-desc">May risk ng panganib, ireport mo na yan</div></button>
-        <button class="report-option-btn" onclick="showConcernForm()"><div class="report-option-icon">💭</div><div class="report-option-title">Concern / Suggestion</div><div class="report-option-desc">May idea ka para mapadali ang workplace? i-share mo sito</div></button>
+        <button class="report-option-btn" onclick="showConcernForm()"><div class="report-option-icon">💭</div><div class="report-option-title">Concern / Suggestion</div><div class="report-option-desc">May idea ka para mapadali ang workplace? i-share mo dito</div></button>
       </div>
     </div>
     <div class="sidebar-overlay" id="reportSidebarOverlay" onclick="closeSidebar()"></div>
