@@ -35,6 +35,16 @@ def dashboard_stats():
         cur.execute("SELECT COUNT(*) AS cnt FROM concern_reports WHERE status='resolved'")
         rc = cur.fetchone()["cnt"]
         resolved = rh + rc
+        cur.execute("SELECT COUNT(*) AS cnt FROM hazard_reports WHERE status='rejected'")
+        rej_h = cur.fetchone()["cnt"]
+        cur.execute("SELECT COUNT(*) AS cnt FROM concern_reports WHERE status='rejected'")
+        rej_c = cur.fetchone()["cnt"]
+        rejected = rej_h + rej_c
+        cur.execute("SELECT COUNT(*) AS cnt FROM hazard_reports WHERE status='pending'")
+        pend_h = cur.fetchone()["cnt"]
+        cur.execute("SELECT COUNT(*) AS cnt FROM concern_reports WHERE status='pending'")
+        pend_c = cur.fetchone()["cnt"]
+        pending = pend_h + pend_c
         cur.close()
         return (
             jsonify(
@@ -43,8 +53,10 @@ def dashboard_stats():
                     "stats": {
                         "total_incidents": total,
                         "hazards_identified": h,
+                        "total_concerns": c,
                         "resolved_incidents": resolved,
-                        "pending_incidents": max(0, total - resolved),
+                        "rejected_incidents": rejected,
+                        "pending_incidents": pending,
                     },
                 }
             ),
