@@ -1423,7 +1423,7 @@
           <th onclick="sortConcernTableBy('location')" style="cursor:pointer;user-select:none;">Location <span id="concernSortIcon-location" class="concern-sort-icon">↕</span></th>
           <th onclick="sortConcernTableBy('ai_priority')" style="cursor:pointer;user-select:none;">Priority <span id="concernSortIcon-ai_priority" class="concern-sort-icon">↕</span></th>
           <th onclick="sortConcernTableBy('status')" style="cursor:pointer;user-select:none;">Status <span id="concernSortIcon-status" class="concern-sort-icon">↕</span></th>
-          <th onclick="sortConcernTableBy('ehs_officer')" style="cursor:pointer;user-select:none;">EHS Officer <span id="concernSortIcon-ehs_officer" class="concern-sort-icon">↕</span></th>
+          <th onclick="sortConcernTableBy('ehs_officer')" style="cursor:pointer;user-select:none;">Checked by <span id="concernSortIcon-ehs_officer" class="concern-sort-icon">↕</span></th>
           <th>Image</th>
           <th>Action</th>
         </tr></thead>
@@ -2505,13 +2505,13 @@ function printConcernTable(dateFrom, dateTo, status, location, hazardType, prior
   if (priority) extraFilters.push({label:'Priority', value:priority.replace(/\b\w/g,c=>c.toUpperCase())});
 
   // ── Hazard table ──
-  const hazardThead = `<thead><tr><th>#</th><th>Date</th><th>Reported By</th><th>Location</th><th>Main Hazard Type</th><th>Categories</th><th>Specific Details</th><th>Priority</th><th>Status</th><th>Resolved On</th><th>Duration</th><th>EHS Officer</th><th>Remarks</th></tr></thead>`;
+  const hazardThead = `<thead><tr><th>#</th><th>Date</th><th>Reported By</th><th>Location</th><th>Main Hazard Type</th><th>Categories</th><th>Specific Details</th><th>Priority</th><th>Status</th><th>Resolved On</th><th>Duration</th><th>Checked by</th><th>Remarks</th></tr></thead>`;
   const hazardTbody = hazards.length
     ? hazards.map((r,i)=>`<tr><td>${i+1}</td><td>${fmtDate(r.date)}</td><td>${escHtml(r.reported_by||'—')}</td><td>${escHtml(r.location||'—')}</td><td>${escHtml(r.hazard_type||'—')}</td><td>${escHtml(r.hazard_categories||'—')}</td><td>${escHtml(r.hazard_details||'—')}</td><td>${_badge('priority',r.ai_priority)}</td><td>${_badge('status',r.status)}</td><td>${fmtResolvedAt(r.resolved_at)}</td><td>${r.duration||'—'}</td><td>${escHtml(r.ehs_officer||'—')}</td><td>${escHtml(r.admin_remarks||'—')}</td></tr>`).join('')
     : `<tr><td colspan="13" class="empty-msg">No hazard reports found.</td></tr>`;
 
   // ── Concern / Suggestion table ──
-  const concernThead = `<thead><tr><th>#</th><th>Date</th><th>Type</th><th>Reported By</th><th>Location</th><th>Description</th><th>Priority</th><th>Status</th><th>Resolved On</th><th>Duration</th><th>EHS Officer</th><th>Remarks</th></tr></thead>`;
+  const concernThead = `<thead><tr><th>#</th><th>Date</th><th>Type</th><th>Reported By</th><th>Location</th><th>Description</th><th>Priority</th><th>Status</th><th>Resolved On</th><th>Duration</th><th>Checked by</th><th>Remarks</th></tr></thead>`;
   const concernTbody = concerns.length
     ? concerns.map((r,i)=>`<tr><td>${i+1}</td><td>${fmtDate(r.date)}</td><td>${escHtml(r._rtype||'—')}</td><td>${escHtml(r.reported_by||'—')}</td><td>${escHtml(r.location||'—')}</td><td style="max-width:200px;white-space:normal;">${escHtml(r.description||'—')}</td><td>${_badge('priority',r.ai_priority)}</td><td>${_badge('status',r.status)}</td><td>${fmtResolvedAt(r.resolved_at)}</td><td>${r.duration||'—'}</td><td>${escHtml(r.ehs_officer||'—')}</td><td>${escHtml(r.admin_remarks||'—')}</td></tr>`).join('')
     : `<tr><td colspan="12" class="empty-msg">No concern/suggestion reports found.</td></tr>`;
