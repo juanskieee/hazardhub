@@ -1415,7 +1415,18 @@
       </div>
       <div class="concern-results-count" id="concernResultsCount"></div>
       <table>
-        <thead><tr><th>Date</th><th>Time</th><th>Type of Report</th><th>Reported By</th><th>Location</th><th>Priority</th><th>Status</th><th>EHS Officer</th><th>Image</th><th>Action</th></tr></thead>
+        <thead><tr>
+          <th onclick="sortConcernTableBy('date')" style="cursor:pointer;user-select:none;">Date <span id="concernSortIcon-date" class="concern-sort-icon">↕</span></th>
+          <th onclick="sortConcernTableBy('time')" style="cursor:pointer;user-select:none;">Time <span id="concernSortIcon-time" class="concern-sort-icon">↕</span></th>
+          <th onclick="sortConcernTableBy('type')" style="cursor:pointer;user-select:none;">Type of Report <span id="concernSortIcon-type" class="concern-sort-icon">↕</span></th>
+          <th onclick="sortConcernTableBy('reported_by')" style="cursor:pointer;user-select:none;">Reported By <span id="concernSortIcon-reported_by" class="concern-sort-icon">↕</span></th>
+          <th onclick="sortConcernTableBy('location')" style="cursor:pointer;user-select:none;">Location <span id="concernSortIcon-location" class="concern-sort-icon">↕</span></th>
+          <th onclick="sortConcernTableBy('ai_priority')" style="cursor:pointer;user-select:none;">Priority <span id="concernSortIcon-ai_priority" class="concern-sort-icon">↕</span></th>
+          <th onclick="sortConcernTableBy('status')" style="cursor:pointer;user-select:none;">Status <span id="concernSortIcon-status" class="concern-sort-icon">↕</span></th>
+          <th onclick="sortConcernTableBy('ehs_officer')" style="cursor:pointer;user-select:none;">EHS Officer <span id="concernSortIcon-ehs_officer" class="concern-sort-icon">↕</span></th>
+          <th>Image</th>
+          <th>Action</th>
+        </tr></thead>
         <tbody id="concernTableBody"><tr class="empty-row"><td colspan="10" style="text-align:center;color:#bbb;font-style:italic;padding:20px;">Loading…</td></tr></tbody>
       </table>
     </div>
@@ -1763,6 +1774,78 @@ function exportFireExcel(){
 /* ═══ CONCERN PAGE ═══ */
 let allConcernData=[];
 function filterConcernTable(){applyAllConcernFilters();}
+let concernSortState={col:'date',dir:'desc'};
+function sortPriorityRank(p){const v=(p||'').toLowerCase();if(v==='high')return 3;if(v==='medium')return 2;if(v==='low')return 1;return 0;}
+function sortConcernText(v){return (v==null?'':String(v)).toLowerCase();}
+function compareConcern(a,b,col){
+  const dir=concernSortState.dir==='asc'?1:-1;
+  const av=a?.[col];
+  const bv=b?.[col];
+  if(col==='date'){
+    const ad=(a.date||'').slice?String(a.date).slice(0,10):String(a.date||'').slice(0,10);
+    const bd=(b.date||'').slice?String(b.date).slice(0,10):String(b.date||'').slice(0,10);
+    return (ad||'').localeCompare(bd||'')*dir;
+  }
+  if(col==='time'){
+    const at=String(a.time||'').slice(0,5);
+    const bt=String(b.time||'').slice(0,5);
+    return (at||'').localeCompare(bt||'')*dir;
+  }
+  if(col==='ai_priority'){
+    return (sortPriorityRank(av)-sortPriorityRank(bv))*dir;
+  }
+  if(col==='status'){
+    const rank=s=>{s=(s||'pending').toLowerCase();if(s==='pending')return 1;if(s==='resolved')return 2;if(s==='rejected')return 0;return 1;};
+    return (rank(av)-rank(bv))*dir;
+  }
+  if(col==='reported_by'){
+    return sortConcernText(av).localeCompare(sortConcernText(bv))*dir;
+  }
+  if(col==='location'){
+    return sortConcernText(av).localeCompare(sortConcernText(bv))*dir;
+  }
+  if(col==='type'){
+    const at=a._rtype||a.concern_type||'';
+    const bt=b._rtype||b.concern_type||'';
+    return sortConcernText(at).localeCompare(sortConcernText(bt))*dir;
+  }
+  if(col==='ehs_officer'){
+    return sortConcernText(av).localeCompare(sortConcernText(bv))*dir;
+  }
+  return sortConcernText(av).localeCompare(sortConcernText(bv))*dir;
+}
+function setConcernSort(col){
+  if(concernSortState.col===col){
+    concernSortState.dir=concernSortState.dir==='asc'?'desc':'asc';
+  }else{
+    concernSortState.col=col;
+    concernSortState.dir='desc';
+  }
+  updateConcernSortIcons();
+  applyAllConcernFilters();
+}
+function updateConcernSortIcons(){
+  const cols=['date','time','type','reported_by','location','ai_priority','status','ehs_officer'];
+  cols.forEach(c=>{
+    const el=document.getElementById(`concernSortIcon-${c}`);
+    if(!el)return;
+    if(concernSortState.col!==c){el.textContent='↕';return;}
+    el.textContent=concernSortState.dir==='asc'?'▲':'▼';
+  });
+}
+function sortConcernItems(items){
+  const arr=[...(items||[])];
+  const col=concernSortState.col;
+  if(!col)return arr;
+  arr.sort((a,b)=>{
+    if(col==='reported_by')return (sortConcernText(a.reported_by||a.submitted_by).localeCompare(sortConcernText(b.reported_by||b.submitted_by)))*(concernSortState.dir==='asc'?1:-1);
+    if(col==='type')return (sortConcernText(a._rtype||'').localeCompare(sortConcernText(b._rtype||'')))*(concernSortState.dir==='asc'?1:-1);
+    if(col==='ehs_officer')return sortConcernText(a.ehs_officer).localeCompare(sortConcernText(b.ehs_officer))*(concernSortState.dir==='asc'?1:-1);
+    return compareConcern(a,b,col);
+  });
+  return arr;
+}
+
 function applyAllConcernFilters(){
   const type=document.getElementById('cncFilterType')?.value||'';
   const stat=document.getElementById('cncFilterStatus')?.value||'';
@@ -1784,8 +1867,11 @@ function applyAllConcernFilters(){
   if(parts.length>0){indicatorText.textContent='🔍 '+parts.join(' · ');indicator.classList.add('visible');}else{indicator.classList.remove('visible');}
   const countEl=document.getElementById('concernResultsCount');
   if(parts.length>0){countEl.textContent=`Showing ${filtered.length} of ${allConcernData.length} report${allConcernData.length!==1?'s':''}`;}else{countEl.textContent='';}
+  filtered=sortConcernItems(filtered);
   renderConcernTable(filtered);
 }
+
+function sortConcernTableBy(col){setConcernSort(col);}
 function resetAllConcernFilters(){
   if(document.getElementById('cncFilterType'))document.getElementById('cncFilterType').value='';
   if(document.getElementById('cncFilterStatus'))document.getElementById('cncFilterStatus').value='';
