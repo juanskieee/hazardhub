@@ -1949,10 +1949,59 @@ function viewConcernRow(idx){
   document.getElementById('rptDetailOverlay').classList.add('open');
 }
 let statusModalIdx=null;
-function openStatusModal(idx){const r=allConcernData[idx];if(!r)return;statusModalIdx=idx;document.getElementById('statusModalSelect').value=(r.status||'pending').toLowerCase();document.getElementById('statusModalRemarks').value=r.admin_remarks||'';document.getElementById('statusModalOverlay').classList.add('open');}
+function openStatusModal(idx){
+  const r=allConcernData[idx];
+  if(!r)return;
+  statusModalIdx=idx;
+  const sel=document.getElementById('statusModalSelect');
+  const ta=document.getElementById('statusModalRemarks');
+  const currentStatus=(r.status||'pending').toLowerCase();
+
+  sel.value=currentStatus;
+  ta.value=r.admin_remarks||'';
+
+  const isLocked=currentStatus==='resolved' || currentStatus==='rejected';
+  sel.disabled=isLocked;
+  ta.disabled=isLocked;
+
+  const overlay=document.getElementById('statusModalOverlay');
+  overlay.classList.add('open');
+
+  const saveBtn=overlay.querySelector('.status-modal-confirm');
+  if(saveBtn) {
+    saveBtn.disabled=isLocked;
+    if(isLocked){
+      saveBtn.style.opacity='0.5';
+      saveBtn.style.cursor='not-allowed';
+    } else {
+      saveBtn.style.opacity='';
+      saveBtn.style.cursor='';
+    }
+  }
+
+  // For rejected specifically: ensure user cannot submit or change anything.
+  if(currentStatus==='rejected'){
+    sel.disabled=true;
+    ta.disabled=true;
+    showToast('Rejected concerns cannot be edited.','#c62828');
+  }
+}
+
 function closeStatusModal(e){if(e.target===document.getElementById('statusModalOverlay'))document.getElementById('statusModalOverlay').classList.remove('open');}
 async function submitStatusUpdate(){
   const r=allConcernData[statusModalIdx];if(!r)return;
+  const currentStatus=(r.status||'pending').toLowerCase();
+  if(currentStatus==='rejected'){
+    showToast('Rejected concerns cannot be edited.','#c62828');
+    document.getElementById('statusModalOverlay').classList.remove('open');
+    return;
+  }
+  if(currentStatus==='resolved'){
+    showToast('Resolved concerns cannot be edited.','#c62828');
+    document.getElementById('statusModalOverlay').classList.remove('open');
+    return;
+  }
+
   const newStatus=document.getElementById('statusModalSelect').value;
   const remarks=document.getElementById('statusModalRemarks').value.trim();
   const endpoint=(r._rtype==='Hazard')?`${API}/hazards/${r.id}/status`:`${API}/concerns/${r.id}/status`;

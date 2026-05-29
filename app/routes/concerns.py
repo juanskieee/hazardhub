@@ -188,22 +188,33 @@ def update_concern_status(cid):
     now = datetime.now()
     try:
         cur = mysql.connection.cursor()
-        cur.execute("SELECT created_at, resolved_at FROM concern_reports WHERE id=%s", (cid,))
+        cur.execute("SELECT status, created_at, resolved_at FROM concern_reports WHERE id=%s", (cid,))
         row = cur.fetchone()
+        existing_status = (row["status"] if row else None) or "pending"
         created_at = row["created_at"] if row else None
         existing_resolved = row["resolved_at"] if row else None
+
+        # Lock: once resolved or rejected, no further edits allowed.
+        if (existing_status or "").lower() == "resolved" or existing_resolved is not None:
+            return jsonify({"error": "Status already resolved and cannot be edited."}), 400
+        if (existing_status or "").lower() == "rejected":
+            return jsonify({"error": "Status already rejected and cannot be edited."}), 400
+
+
         if status == "resolved" and not existing_resolved:
             resolved_at = now
         elif status != "resolved":
             resolved_at = None
         else:
             resolved_at = existing_resolved
+
         cur.execute(
             "UPDATE concern_reports SET status=%s, admin_remarks=%s, ehs_officer=%s, resolved_at=%s WHERE id=%s",
             (status, remarks or None, ehs_officer or None, resolved_at, cid),
         )
         mysql.connection.commit()
         cur.close()
+
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
