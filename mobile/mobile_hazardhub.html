@@ -1737,6 +1737,7 @@ const _origin = `${window.location.protocol}//${window.location.host}`;
 let API = `${_origin}/api`;
 let currentUser = null;
 let pendingReportDeepLink = false;
+let pendingHazardDeepLink = false;
 
 // Automatically attach X-Client: mobile to every API request so the server
 // uses the separate mobile session cookie (hazardhub_mobile) and never
@@ -1755,6 +1756,7 @@ window.addEventListener('load', async () => {
   document.getElementById('concernDate').value = today;
   document.getElementById('hazardDate').value = today;
   pendingReportDeepLink = isReportDeepLink();
+  pendingHazardDeepLink = isHazardDeepLink();
   checkExistingSession();
 });
 
@@ -1766,7 +1768,14 @@ function isReportDeepLink() {
   const params = new URLSearchParams(window.location.search);
   const screen = (params.get('screen') || params.get('page') || '').toLowerCase();
   const hash = (window.location.hash || '').replace('#','').toLowerCase();
-  return screen === 'report' || hash === 'report';
+  return screen === 'report' || screen === 'hazard' || hash === 'report' || hash === 'hazard';
+}
+
+function isHazardDeepLink() {
+  const params = new URLSearchParams(window.location.search);
+  const screen = (params.get('screen') || params.get('page') || '').toLowerCase();
+  const hash = (window.location.hash || '').replace('#','').toLowerCase();
+  return screen === 'hazard' || hash === 'hazard';
 }
 
 async function checkExistingSession() {
@@ -1787,6 +1796,11 @@ async function checkExistingSession() {
 }
 function routeAfterLogin() {
   if (currentUser && currentUser.role === 'Admin') showAdminDashboard();
+  else if (pendingHazardDeepLink || isHazardDeepLink()) {
+    pendingHazardDeepLink = false;
+    pendingReportDeepLink = false;
+    showHazardForm();
+  }
   else if (pendingReportDeepLink || isReportDeepLink()) {
     pendingReportDeepLink = false;
     showReportChoice();
