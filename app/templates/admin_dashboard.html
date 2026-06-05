@@ -391,6 +391,23 @@
     .notif-panel-close{background:none;border:none;font-size:1.1rem;cursor:pointer;color:var(--text-dark);padding:2px 6px;border-radius:6px;}
     .notif-panel-close:hover{background:rgba(0,0,0,.1);}
     .notif-panel-body{max-height:380px;overflow-y:auto;padding:10px 0;}
+    .notif-item{padding:12px 18px;border-bottom:1px solid #eee;cursor:pointer;transition:background .15s;}
+    .notif-item:last-child{border-bottom:none;}
+    .notif-item:hover{background:var(--gold-pale);}
+    .notif-item.unread{background:#fffbf0;border-left:4px solid var(--gold);}
+    .notif-item-message{font-size:.82rem;font-weight:700;color:var(--text-dark);margin-bottom:4px;line-height:1.4;}
+    .notif-item-details{display:flex;align-items:center;gap:8px;font-size:.70rem;color:var(--text-muted);font-weight:600;}
+    .notif-badge-high{display:inline-block;background:#c62828;color:#fff;padding:2px 7px;border-radius:4px;font-size:.65rem;font-weight:800;}
+    .notif-badge-medium{display:inline-block;background:#e07b00;color:#fff;padding:2px 7px;border-radius:4px;font-size:.65rem;font-weight:800;}
+    .notif-badge-low{display:inline-block;background:#2e7d32;color:#fff;padding:2px 7px;border-radius:4px;font-size:.65rem;font-weight:800;}
+    .notif-toast{position:fixed;top:20px;right:20px;background:#fff;border-radius:10px;box-shadow:0 6px 30px rgba(0,0,0,.22);padding:16px 18px;max-width:360px;animation:slideInRight .3s ease;z-index:2000;border-left:4px solid var(--gold);}
+    .notif-toast.high{border-left-color:#c62828;}
+    .notif-toast.medium{border-left-color:#e07b00;}
+    .notif-toast.low{border-left-color:#2e7d32;}
+    .notif-toast-title{font-size:.85rem;font-weight:900;color:var(--text-dark);margin-bottom:4px;}
+    .notif-toast-message{font-size:.78rem;color:var(--text-muted);line-height:1.4;}
+    @keyframes slideInRight{from{transform:translateX(400px);opacity:0;}to{transform:translateX(0);opacity:1;}}
+    .notif-empty{padding:20px 18px;text-align:center;font-size:.82rem;color:#bbb;font-style:italic;}
     .notif-item{display:flex;align-items:flex-start;gap:10px;padding:10px 16px;border-bottom:1px solid #f0f0f0;cursor:pointer;transition:background .12s;}
     .notif-item:last-child{border-bottom:none;}
     .notif-item:hover{background:#fffbf0;}
@@ -1241,7 +1258,7 @@
     <a class="nav-link" data-page="about">About Us</a>
   </nav>
   <div style="display:flex;justify-content:center;margin-bottom:4px;">
-    <div class="notif-bell-wrap" onclick="openNotifPanel()" title="File Expiry Notifications">
+    <div class="notif-bell-wrap" onclick="openNotifPanel()" title="View admin notifications for new reports">
       <svg class="notif-bell-svg" viewBox="0 0 24 24" fill="none" stroke="#2a1f00" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
       <span class="notif-bell-dot" id="notifBellDot"></span>
     </div>
@@ -1292,7 +1309,7 @@
         <div class="table-title" style="margin-bottom:0;">Hazard &amp; Concern/Suggestion Report</div>
         <button class="print-table-btn" onclick="openPrintDialog('dashboard-reports')">🖨️ Print</button>
       </div>
-      <table><thead><tr><th>Date</th><th>Time</th><th>Type of Report</th><th>Reported By</th><th>Priority</th><th>Status</th><th>Location</th></tr></thead>
+      <table><thead><tr><th onclick="sortDashTableBy('date')" style="cursor:pointer;user-select:none;">Date <span id="dashSortIcon-date" class="dash-sort-icon">↕</span></th><th onclick="sortDashTableBy('time')" style="cursor:pointer;user-select:none;">Time <span id="dashSortIcon-time" class="dash-sort-icon">↕</span></th><th onclick="sortDashTableBy('type')" style="cursor:pointer;user-select:none;">Type of Report <span id="dashSortIcon-type" class="dash-sort-icon">↕</span></th><th onclick="sortDashTableBy('reported_by')" style="cursor:pointer;user-select:none;">Reported By <span id="dashSortIcon-reported_by" class="dash-sort-icon">↕</span></th><th onclick="sortDashTableBy('ai_priority')" style="cursor:pointer;user-select:none;">Priority <span id="dashSortIcon-ai_priority" class="dash-sort-icon">↕</span></th><th onclick="sortDashTableBy('status')" style="cursor:pointer;user-select:none;">Status <span id="dashSortIcon-status" class="dash-sort-icon">↕</span></th><th onclick="sortDashTableBy('location')" style="cursor:pointer;user-select:none;">Location <span id="dashSortIcon-location" class="dash-sort-icon">↕</span></th></tr></thead>
       <tbody id="dashReportTableBody"><tr class="empty-row"><td colspan="7" style="text-align:center;color:#bbb;font-style:italic;padding:20px;">Loading reports…</td></tr></tbody></table>
     </div>
     <div class="table-section">
@@ -1300,7 +1317,7 @@
         <div class="table-title" style="margin-bottom:0;">Notification Alert</div>
         <button class="print-table-btn" onclick="openPrintDialog('dashboard-notifs')">🖨️ Print</button>
       </div>
-      <table><thead><tr><th>Date</th><th>Severity</th><th>Message Alert</th><th>Location</th></tr></thead>
+      <table><thead><tr><th onclick="sortDashNotifTableBy('date')" style="cursor:pointer;user-select:none;">Date <span id="dashNotifSortIcon-date" class="dash-notif-sort-icon">↕</span></th><th onclick="sortDashNotifTableBy('severity')" style="cursor:pointer;user-select:none;">Severity <span id="dashNotifSortIcon-severity" class="dash-notif-sort-icon">↕</span></th><th onclick="sortDashNotifTableBy('message')" style="cursor:pointer;user-select:none;">Message Alert <span id="dashNotifSortIcon-message" class="dash-notif-sort-icon">↕</span></th><th onclick="sortDashNotifTableBy('location')" style="cursor:pointer;user-select:none;">Location <span id="dashNotifSortIcon-location" class="dash-notif-sort-icon">↕</span></th></tr></thead>
       <tbody id="dashNotifTableBody"><tr class="empty-row"><td colspan="4" style="text-align:center;color:#bbb;font-style:italic;padding:20px;">Loading notifications…</td></tr></tbody></table>
     </div>
     <div class="section-box">
@@ -1349,7 +1366,7 @@
       </div>
       <table>
         <thead>
-          <tr><th>Control No.</th><th>Date Submitted</th><th>Injured Person</th><th>Accident Date</th><th>Accident Location</th><th>Establishment</th><th>OH Officer</th><th>Action</th></tr>
+          <tr><th onclick="sortInvTableBy('control_no')" style="cursor:pointer;user-select:none;">Control No. <span id="invSortIcon-control_no" class="inv-sort-icon">↕</span></th><th onclick="sortInvTableBy('date_submitted')" style="cursor:pointer;user-select:none;">Date Submitted <span id="invSortIcon-date_submitted" class="inv-sort-icon">↕</span></th><th onclick="sortInvTableBy('injured_person')" style="cursor:pointer;user-select:none;">Injured Person <span id="invSortIcon-injured_person" class="inv-sort-icon">↕</span></th><th onclick="sortInvTableBy('accident_date')" style="cursor:pointer;user-select:none;">Accident Date <span id="invSortIcon-accident_date" class="inv-sort-icon">↕</span></th><th onclick="sortInvTableBy('location')" style="cursor:pointer;user-select:none;">Accident Location <span id="invSortIcon-location" class="inv-sort-icon">↕</span></th><th onclick="sortInvTableBy('establishment')" style="cursor:pointer;user-select:none;">Establishment <span id="invSortIcon-establishment" class="inv-sort-icon">↕</span></th><th onclick="sortInvTableBy('oh_officer')" style="cursor:pointer;user-select:none;">OH Officer <span id="invSortIcon-oh_officer" class="inv-sort-icon">↕</span></th><th>Action</th></tr>
         </thead>
         <tbody id="invReportTableBody">
           <tr><td colspan="8"><div class="inv-rpt-empty">
@@ -1384,21 +1401,21 @@
     <div class="logsheet-wrap" id="log-ext">
       <div class="logsheet-title">Monthly Fire Extinguisher Inspection Logsheet</div>
       <div class="logsheet-table-wrap">
-        <table><thead><tr><th>No.</th><th>Location</th><th>Type</th><th>Capacity</th><th>No Obstruction</th><th>Label Visible</th><th>Safety Pin</th><th>Tag in Place</th><th>Pressure Gauge</th><th>No Physical Damage</th><th>Expiry Date</th><th>Inspected By</th><th>Date Inspected</th><th>Remark</th></tr></thead>
+        <table><thead><tr><th>No.</th><th onclick="sortFireExtTableBy('location')" style="cursor:pointer;user-select:none;">Location <span id="fireExtSortIcon-location" class="fire-ext-sort-icon">↕</span></th><th onclick="sortFireExtTableBy('type')" style="cursor:pointer;user-select:none;">Type <span id="fireExtSortIcon-type" class="fire-ext-sort-icon">↕</span></th><th onclick="sortFireExtTableBy('capacity')" style="cursor:pointer;user-select:none;">Capacity <span id="fireExtSortIcon-capacity" class="fire-ext-sort-icon">↕</span></th><th>No Obstruction</th><th>Label Visible</th><th>Safety Pin</th><th>Tag in Place</th><th>Pressure Gauge</th><th>No Physical Damage</th><th onclick="sortFireExtTableBy('expiry_date')" style="cursor:pointer;user-select:none;">Expiry Date <span id="fireExtSortIcon-expiry_date" class="fire-ext-sort-icon">↕</span></th><th onclick="sortFireExtTableBy('inspected_by')" style="cursor:pointer;user-select:none;">Inspected By <span id="fireExtSortIcon-inspected_by" class="fire-ext-sort-icon">↕</span></th><th onclick="sortFireExtTableBy('date_inspected')" style="cursor:pointer;user-select:none;">Date Inspected <span id="fireExtSortIcon-date_inspected" class="fire-ext-sort-icon">↕</span></th><th>Remark</th></tr></thead>
         <tbody id="fireExtTableBody"><tr class="empty-row"><td colspan="14" style="text-align:center;color:#bbb;font-style:italic;padding:16px;">No inspections yet.</td></tr></tbody></table>
       </div>
     </div>
     <div class="logsheet-wrap" id="log-light" style="display:none;">
       <div class="logsheet-title">Monthly Emergency Light Inspection Logsheet</div>
       <div class="logsheet-table-wrap">
-        <table><thead><tr><th>No.</th><th>Location</th><th>Designation Area</th><th>Good Physical Condition</th><th>Time of Testing</th><th>Lighting After 1hr</th><th>Inspected By</th><th>Date Inspected</th><th>Remark</th></tr></thead>
+        <table><thead><tr><th>No.</th><th onclick="sortFireLightTableBy('location')" style="cursor:pointer;user-select:none;">Location <span id="fireLightSortIcon-location" class="fire-light-sort-icon">↕</span></th><th onclick="sortFireLightTableBy('designation_area')" style="cursor:pointer;user-select:none;">Designation Area <span id="fireLightSortIcon-designation_area" class="fire-light-sort-icon">↕</span></th><th>Good Physical Condition</th><th>Time of Testing</th><th>Lighting After 1hr</th><th onclick="sortFireLightTableBy('inspected_by')" style="cursor:pointer;user-select:none;">Inspected By <span id="fireLightSortIcon-inspected_by" class="fire-light-sort-icon">↕</span></th><th onclick="sortFireLightTableBy('date_inspected')" style="cursor:pointer;user-select:none;">Date Inspected <span id="fireLightSortIcon-date_inspected" class="fire-light-sort-icon">↕</span></th><th>Remark</th></tr></thead>
         <tbody id="fireLightTableBody"><tr class="empty-row"><td colspan="9" style="text-align:center;color:#bbb;font-style:italic;padding:16px;">No inspections yet.</td></tr></tbody></table>
       </div>
     </div>
     <div class="logsheet-wrap" id="log-hose" style="display:none;">
       <div class="logsheet-title">Monthly Fire Cabinet / Hose Set Inspection Logsheet</div>
       <div class="logsheet-table-wrap">
-        <table><thead><tr><th>No.</th><th>Location</th><th>No Obstruction</th><th>Glass</th><th>Hose</th><th>Nozzle</th><th>Axe</th><th>Valve</th><th>Cabinet</th><th>Inspected By</th><th>Date Inspected</th><th>Remark</th></tr></thead>
+        <table><thead><tr><th>No.</th><th onclick="sortFireHoseTableBy('location')" style="cursor:pointer;user-select:none;">Location <span id="fireHoseSortIcon-location" class="fire-hose-sort-icon">↕</span></th><th>No Obstruction</th><th>Glass</th><th>Hose</th><th>Nozzle</th><th>Axe</th><th>Valve</th><th>Cabinet</th><th onclick="sortFireHoseTableBy('inspected_by')" style="cursor:pointer;user-select:none;">Inspected By <span id="fireHoseSortIcon-inspected_by" class="fire-hose-sort-icon">↕</span></th><th onclick="sortFireHoseTableBy('date_inspected')" style="cursor:pointer;user-select:none;">Date Inspected <span id="fireHoseSortIcon-date_inspected" class="fire-hose-sort-icon">↕</span></th><th>Remark</th></tr></thead>
         <tbody id="fireHoseTableBody"><tr class="empty-row"><td colspan="12" style="text-align:center;color:#bbb;font-style:italic;padding:16px;">No inspections yet.</td></tr></tbody></table>
       </div>
     </div>
@@ -1489,7 +1506,7 @@
             <select class="mini-filter-select" id="miniHazardStatus" onchange="filterMiniTable('hazard')" title="Filter by Status"><option value="">All Status</option><option value="pending">Pending</option><option value="resolved">Resolved</option><option value="rejected">Rejected</option></select>
             <button class="mini-filter-clear" id="miniHazardClear" onclick="clearMiniFilter('hazard')" title="Clear filters">✕</button>
           </div>
-          <table style="font-size:.75rem;"><thead><tr><th>Date</th><th>Type</th><th>Location</th><th>Priority</th><th>Status</th></tr></thead>
+          <table style="font-size:.75rem;"><thead><tr><th onclick="sortMiniTableBy('hazard','date')" style="cursor:pointer;user-select:none;">Date <span id="miniHazardSortIcon-date" class="mini-sort-icon">↕</span></th><th onclick="sortMiniTableBy('hazard','type')" style="cursor:pointer;user-select:none;">Type <span id="miniHazardSortIcon-type" class="mini-sort-icon">↕</span></th><th onclick="sortMiniTableBy('hazard','location')" style="cursor:pointer;user-select:none;">Location <span id="miniHazardSortIcon-location" class="mini-sort-icon">↕</span></th><th onclick="sortMiniTableBy('hazard','priority')" style="cursor:pointer;user-select:none;">Priority <span id="miniHazardSortIcon-priority" class="mini-sort-icon">↕</span></th><th onclick="sortMiniTableBy('hazard','status')" style="cursor:pointer;user-select:none;">Status <span id="miniHazardSortIcon-status" class="mini-sort-icon">↕</span></th></tr></thead>
           <tbody id="concernHazardMiniBody"><tr><td colspan="5" style="text-align:center;color:#bbb;font-style:italic;padding:14px;">No hazard reports yet.</td></tr></tbody></table>
         </div>
         <div class="concern-status-card">
@@ -1499,7 +1516,7 @@
             <select class="mini-filter-select" id="miniConcernStatus" onchange="filterMiniTable('concern')" title="Filter by Status"><option value="">All Status</option><option value="pending">Pending</option><option value="resolved">Resolved</option><option value="rejected">Rejected</option></select>
             <button class="mini-filter-clear" id="miniConcernClear" onclick="clearMiniFilter('concern')" title="Clear filters">✕</button>
           </div>
-          <table style="font-size:.75rem;"><thead><tr><th>Date</th><th>Type</th><th>Location</th><th>Priority</th><th>Status</th></tr></thead>
+          <table style="font-size:.75rem;"><thead><tr><th onclick="sortMiniTableBy('concern','date')" style="cursor:pointer;user-select:none;">Date <span id="miniConcernSortIcon-date" class="mini-sort-icon">↕</span></th><th onclick="sortMiniTableBy('concern','type')" style="cursor:pointer;user-select:none;">Type <span id="miniConcernSortIcon-type" class="mini-sort-icon">↕</span></th><th onclick="sortMiniTableBy('concern','location')" style="cursor:pointer;user-select:none;">Location <span id="miniConcernSortIcon-location" class="mini-sort-icon">↕</span></th><th onclick="sortMiniTableBy('concern','priority')" style="cursor:pointer;user-select:none;">Priority <span id="miniConcernSortIcon-priority" class="mini-sort-icon">↕</span></th><th onclick="sortMiniTableBy('concern','status')" style="cursor:pointer;user-select:none;">Status <span id="miniConcernSortIcon-status" class="mini-sort-icon">↕</span></th></tr></thead>
           <tbody id="concernConcernMiniBody"><tr><td colspan="5" style="text-align:center;color:#bbb;font-style:italic;padding:14px;">No concern reports yet.</td></tr></tbody></table>
         </div>
       </div>
@@ -1534,7 +1551,7 @@
       </div>
       <div style="padding:0 16px;">
         <table id="accTable">
-          <thead><tr><th>Name</th><th>Email</th><th>Password</th><th>Role</th><th>Position in Company</th><th>ID No.</th><th>Action</th></tr></thead>
+          <thead><tr><th onclick="sortAccTableBy('name')" style="cursor:pointer;user-select:none;">Name <span id="accSortIcon-name" class="acc-sort-icon">↕</span></th><th onclick="sortAccTableBy('email')" style="cursor:pointer;user-select:none;">Email <span id="accSortIcon-email" class="acc-sort-icon">↕</span></th><th>Password</th><th onclick="sortAccTableBy('role')" style="cursor:pointer;user-select:none;">Role <span id="accSortIcon-role" class="acc-sort-icon">↕</span></th><th onclick="sortAccTableBy('position')" style="cursor:pointer;user-select:none;">Position in Company <span id="accSortIcon-position" class="acc-sort-icon">↕</span></th><th onclick="sortAccTableBy('id_number')" style="cursor:pointer;user-select:none;">ID No. <span id="accSortIcon-id_number" class="acc-sort-icon">↕</span></th><th>Action</th></tr></thead>
           <tbody id="accTableBody"><tr class="empty-row"><td colspan="7" style="text-align:center;color:#bbb;font-style:italic;padding:20px;">Loading accounts…</td></tr></tbody>
         </table>
       </div>
@@ -1666,11 +1683,11 @@
 <div class="notif-panel" id="notifPanel" onclick="closeNotifPanel(event)">
   <div class="notif-panel-box" onclick="event.stopPropagation()">
     <div class="notif-panel-header">
-      <span class="notif-panel-title">🔔 File Notifications</span>
+      <span class="notif-panel-title">🔔 Admin Notifications</span>
       <button class="notif-panel-close" onclick="closeNotifPanel()">✕</button>
     </div>
     <div class="notif-panel-body" id="notifPanelBody">
-      <div class="notif-empty">No notifications</div>
+      <div class="notif-empty">Loading notifications…</div>
     </div>
   </div>
 </div>
@@ -1806,7 +1823,7 @@ function setDashAreaFilter(btn,area){_dashAreaFilter=area;document.querySelector
 async function loadDashboard(){
   initCharts();
   try{const r=await fetch(`${API}/dashboard/stats`);const d=await r.json();if(d.success){const s=d.stats;document.getElementById('dash-total').textContent=s.total_incidents||0;document.getElementById('dash-hazard').textContent=s.hazards_identified||0;loadFireStatsForChart();}}catch(e){}
-  try{const[hRes,cRes]=await Promise.all([fetch(`${API}/hazards`),fetch(`${API}/concerns`)]);const hData=await hRes.json();const cData=await cRes.json();const hazards=(hData.hazards||[]).map(r=>({...r,_rtype:'Hazard'}));const concerns=(cData.concerns||[]).map(r=>({...r,_rtype:r.concern_type||'Concern',reported_by:r.reported_by||r.submitted_by}));const combined=[...hazards,...concerns].sort((a,b)=>b.id-a.id);_dashAllReports=combined;renderDashTable(combined.slice(0,10));
+  try{const[hRes,cRes]=await Promise.all([fetch(`${API}/hazards`),fetch(`${API}/concerns`)]);const hData=await hRes.json();const cData=await cRes.json();const hazards=(hData.hazards||[]).map(r=>({...r,_rtype:'Hazard'}));const concerns=(cData.concerns||[]).map(r=>({...r,_rtype:r.concern_type||'Concern',reported_by:r.reported_by||r.submitted_by}));const combined=[...hazards,...concerns].sort((a,b)=>b.id-a.id);_dashAllReports=combined;allDashReportData=combined;renderDashTable(combined.slice(0,10));
   const byS=s=>combined.filter(r=>(r.status||'pending').toLowerCase()===s).length;
   document.getElementById('dash-concern').textContent=concerns.length;
   document.getElementById('dash-pending').textContent=byS('pending');
@@ -1833,15 +1850,18 @@ async function loadDashboard(){
     chartSummary.update();
   }
   const monthly=new Array(12).fill(0);combined.forEach(r=>{const m=parseInt((r.date||'').split('-')[1])-1;if(m>=0&&m<12)monthly[m]++;});if(chartMonthly){chartMonthly.data.datasets[0].data=monthly;chartMonthly.update();}document.getElementById('dashRefreshLabel').textContent='Updated '+new Date().toLocaleTimeString();}catch(e){}
-  try{const r=await fetch(`${API}/notifications`);const d=await r.json();renderDashNotifs(d.notifications||[]);}catch(e){}
+  try{const r=await fetch(`${API}/notifications`);const d=await r.json();let notifs=d.notifications||[];try{const fRes=await fetch(`${API}/fire-protection/inspections`);const fData=await fRes.json();if(fData.success){notifs=[...notifs,...makeFireExtinguisherExpiryAlerts(fData.inspections||[])]}}catch(e){}allDashNotifData=notifs;renderDashNotifs(notifs);}catch(e){}
 }
 function renderDashTable(items){const tb=document.getElementById('dashReportTableBody');let display=items;if(_dashAreaFilter)display=items.filter(r=>(r.location||'').toLowerCase().includes(_dashAreaFilter.toLowerCase()));if(!display||display.length===0){const msg=_dashAreaFilter?`No reports found in <strong>${_dashAreaFilter}</strong> area.`:'No reports submitted yet.';tb.innerHTML=`<tr><td colspan="7" style="text-align:center;color:#bbb;font-style:italic;padding:20px;">${msg}</td></tr>`;return;}tb.innerHTML=display.map(r=>`<tr><td>${fmtDate(r.date)}</td><td>${fmtTime(r.time)}</td><td>${escHtml(r._rtype||r.concern_type||'—')}</td><td>${escHtml(r.reported_by||'—')}</td><td>${badgePriority(r.ai_priority)}</td><td>${badgeStatus(r.status)}</td><td>${escHtml(r.location||'—')}</td></tr>`).join('');if(window.stampTableLabels)window.stampTableLabels();}
-function renderDashNotifs(notifs){const tb=document.getElementById('dashNotifTableBody');if(!notifs||notifs.length===0){tb.innerHTML=emptyRow(4,'No notifications.');return;}tb.innerHTML=notifs.slice(0,8).map(n=>`<tr><td>${fmtDate(n.date)}</td><td>${badgePriority(n.severity)}</td><td>${escHtml(n.message||'—')}</td><td>${escHtml(n.location||'—')}</td></tr>`).join('');if(window.stampTableLabels)window.stampTableLabels();}
+function renderDashNotifTable(items){const tb=document.getElementById('dashNotifTableBody');if(!items||items.length===0){tb.innerHTML=emptyRow(4,'No notifications.');return;}tb.innerHTML=items.slice(0,8).map(n=>`<tr><td>${fmtDate(n.date)}</td><td>${badgePriority(n.severity)}</td><td>${escHtml(n.message||'—')}</td><td>${escHtml(n.location||'—')}</td></tr>`).join('');if(window.stampTableLabels)window.stampTableLabels();}
+function renderDashNotifs(notifs){const visible=notifs.filter(dashboardAlertFilter);renderDashNotifTable(visible);}
+function getDaysUntilExpiry(dateString){if(!dateString)return null;const exp=new Date(dateString);if(Number.isNaN(exp.getTime()))return null;const today=new Date();const utcToday=Date.UTC(today.getFullYear(),today.getMonth(),today.getDate());const utcExpiry=Date.UTC(exp.getFullYear(),exp.getMonth(),exp.getDate());return Math.ceil((utcExpiry-utcToday)/86400000);}
+function makeFireExtinguisherExpiryAlerts(inspections){if(!Array.isArray(inspections))return [];return inspections.filter(i=>String(i.inspection_type||'').toLowerCase()==='fire_extinguisher').map(i=>{const days=getDaysUntilExpiry(i.expiry_date);if(days===null||days<0||days>2)return null;const location=i.location||'Unknown Location';const when=days===0?'today':days===1?'tomorrow':`in ${days} days`;const message=`Fire extinguisher at ${location} expires ${when} (${i.expiry_date}).`;return {id:`fire-expiry-${i.id||i.expiry_date}-${location}`,date:new Date().toISOString().slice(0,10),severity:'high',message,location,fireExpiryAlert:true};}).filter(Boolean);}
 async function loadFireStatsForChart(){try{const r=await fetch(`${API}/fire-protection/stats`);const d=await r.json();if(d.success&&chartFireMain){chartFireMain.data.datasets[0].data=[d.extinguisher_count||0,d.emergency_light_count||0,d.hose_cabinet_count||0];chartFireMain.update();}}catch(e){}}
 
 /* ═══ REPORT PAGE ═══ */
 let invReports=[],invCtrl=1;
-function loadReportPage(){renderInvReportTable(invReports);}
+function loadReportPage(){allInvReportData=invReports;renderInvReportTable(invReports);}
 function renderInvReportTable(items){
   const tb=document.getElementById('invReportTableBody');
   if(!items||items.length===0){tb.innerHTML=`<tr><td colspan="8"><div class="inv-rpt-empty"><div class="inv-rpt-empty-icon">📋</div><div class="inv-rpt-empty-text">No investigation reports yet</div><div class="inv-rpt-empty-sub">Click "New Investigation Report" below to submit one</div></div></td></tr>`;return;}
@@ -1873,7 +1893,7 @@ function viewInvReport(idx){
 /* ═══ FIRE PROTECTION PAGE ═══ */
 async function loadFirePage(){
   try{const r=await fetch(`${API}/fire-protection/stats`);const d=await r.json();if(d.success){document.getElementById('fireCount-ext').textContent=d.extinguisher_count||0;document.getElementById('fireCount-light').textContent=d.emergency_light_count||0;document.getElementById('fireCount-hose').textContent=d.hose_cabinet_count||0;}}catch(e){}
-  try{const r=await fetch(`${API}/fire-protection/inspections`);const d=await r.json();if(d.success){const all=d.inspections||[];renderFireExtTable(all.filter(i=>i.inspection_type==='fire_extinguisher'));renderFireLightTable(all.filter(i=>i.inspection_type==='emergency_light'));renderFireHoseTable(all.filter(i=>i.inspection_type==='fire_hose_cabinet'));}}catch(e){}
+  try{const r=await fetch(`${API}/fire-protection/inspections`);const d=await r.json();if(d.success){const all=d.inspections||[];const ext=all.filter(i=>i.inspection_type==='fire_extinguisher');const light=all.filter(i=>i.inspection_type==='emergency_light');const hose=all.filter(i=>i.inspection_type==='fire_hose_cabinet');allFireExtData=ext;allFireLightData=light;allFireHoseData=hose;renderFireExtTable(ext);renderFireLightTable(light);renderFireHoseTable(hose);}}catch(e){}
 }
 function renderFireExtTable(rows){const tb=document.getElementById('fireExtTableBody');if(!rows||rows.length===0){tb.innerHTML=emptyRow(14,'No fire extinguisher inspections yet.');return;}tb.innerHTML=rows.map((r,i)=>`<tr><td>${i+1}</td><td>${escHtml(r.location||'—')}</td><td>${escHtml(r.extinguisher_type||'—')}</td><td>${escHtml(r.capacity||'—')}</td><td>${checkCell(r.checklist_ok,'No Obstruction')}</td><td>${checkCell(r.checklist_ok,'Label Visible')}</td><td>${checkCell(r.checklist_ok,'Safety Pin')}</td><td>${checkCell(r.checklist_ok,'Tag in Place')}</td><td>${checkCell(r.checklist_ok,'Pressure Gauge')}</td><td>${checkCell(r.checklist_ok,'No Physical Damage')}</td><td>${escHtml(r.expiry_date||'—')}</td><td>${escHtml(r.inspected_by||'—')}</td><td>${escHtml(r.inspection_date||'—')}</td><td>${escHtml(r.remark||'—')}</td></tr>`).join('');if(window.stampTableLabels)window.stampTableLabels();}
 function renderFireLightTable(rows){const tb=document.getElementById('fireLightTableBody');if(!rows||rows.length===0){tb.innerHTML=emptyRow(9,'No emergency light inspections yet.');return;}tb.innerHTML=rows.map((r,i)=>`<tr><td>${i+1}</td><td>${escHtml(r.location||'—')}</td><td>${checkCell(r.checklist_ok,'Designation Area')}</td><td>${checkCell(r.checklist_ok,'Good Physical Condition')}</td><td>${checkCell(r.checklist_ok,'Time of Testing')}</td><td>${checkCell(r.checklist_ok,'Lighting 1hr')}</td><td>${escHtml(r.inspected_by||'—')}</td><td>${escHtml(r.inspection_date||'—')}</td><td>${escHtml(r.remark||'—')}</td></tr>`).join('');if(window.stampTableLabels)window.stampTableLabels();}
@@ -1998,6 +2018,279 @@ function resetAllConcernFilters(){
   document.getElementById('concernResultsCount').textContent='';
   renderConcernTable(allConcernData);
 }
+
+/* ═══ SORTING FOR ALL TABLES ═══ */
+let allDashReportData=[];
+let dashSortState={col:'date',dir:'desc'};
+function sortDashTableBy(col){
+  if(dashSortState.col===col){
+    dashSortState.dir=dashSortState.dir==='asc'?'desc':'asc';
+  }else{
+    dashSortState.col=col;
+    dashSortState.dir='desc';
+  }
+  updateDashSortIcons();
+  const sorted=[...allDashReportData].sort((a,b)=>compareDashReport(a,b,col));
+  renderDashTable(sorted);
+}
+function updateDashSortIcons(){
+  const cols=['date','time','type','reported_by','ai_priority','status','location'];
+  cols.forEach(c=>{
+    const el=document.getElementById(`dashSortIcon-${c}`);
+    if(!el)return;
+    if(dashSortState.col!==c){el.textContent='↕';return;}
+    el.textContent=dashSortState.dir==='asc'?'▲':'▼';
+  });
+}
+function compareDashReport(a,b,col){
+  const dir=dashSortState.dir==='asc'?1:-1;
+  const av=a?.[col];
+  const bv=b?.[col];
+  if(col==='date'){
+    const ad=String(a.date||'').slice(0,10);
+    const bd=String(b.date||'').slice(0,10);
+    return (ad||'').localeCompare(bd||'')*dir;
+  }
+  if(col==='time'){
+    const at=String(a.time||'').slice(0,5);
+    const bt=String(b.time||'').slice(0,5);
+    return (at||'').localeCompare(bt||'')*dir;
+  }
+  if(col==='ai_priority'){
+    const pr=(p)=>{const v=(p||'').toLowerCase();if(v==='high')return 3;if(v==='medium')return 2;if(v==='low')return 1;return 0;};
+    return (pr(av)-pr(bv))*dir;
+  }
+  if(col==='status'){
+    const rank=(s)=>{s=(s||'pending').toLowerCase();if(s==='pending')return 1;if(s==='resolved')return 2;if(s==='rejected')return 0;return 1;};
+    return (rank(av)-rank(bv))*dir;
+  }
+  return (String(av||'').toLowerCase().localeCompare(String(bv||'').toLowerCase()))*dir;
+}
+
+let allDashNotifData=[];
+let dashNotifSortState={col:'date',dir:'desc'};
+function dashboardAlertFilter(notif){
+  const severity=(notif.severity||'').toLowerCase();
+  return severity==='high' || notif.fireExpiryAlert===true;
+}
+function sortDashNotifTableBy(col){
+  if(dashNotifSortState.col===col){
+    dashNotifSortState.dir=dashNotifSortState.dir==='asc'?'desc':'asc';
+  }else{
+    dashNotifSortState.col=col;
+    dashNotifSortState.dir='desc';
+  }
+  updateDashNotifSortIcons();
+  const sorted=[...allDashNotifData].filter(dashboardAlertFilter).sort((a,b)=>compareDashNotif(a,b,col));
+  renderDashNotifTable(sorted);
+}
+function updateDashNotifSortIcons(){
+  const cols=['date','severity','message','location'];
+  cols.forEach(c=>{
+    const el=document.getElementById(`dashNotifSortIcon-${c}`);
+    if(!el)return;
+    if(dashNotifSortState.col!==c){el.textContent='↕';return;}
+    el.textContent=dashNotifSortState.dir==='asc'?'▲':'▼';
+  });
+}
+function compareDashNotif(a,b,col){
+  const dir=dashNotifSortState.dir==='asc'?1:-1;
+  const av=a?.[col];
+  const bv=b?.[col];
+  if(col==='date'){
+    const ad=String(a.date||'').slice(0,10);
+    const bd=String(b.date||'').slice(0,10);
+    return (ad||'').localeCompare(bd||'')*dir;
+  }
+  if(col==='severity'){
+    const sr=(s)=>{const v=(s||'').toLowerCase();if(v==='high')return 3;if(v==='medium')return 2;if(v==='low')return 1;return 0;};
+    return (sr(av)-sr(bv))*dir;
+  }
+  return (String(av||'').toLowerCase().localeCompare(String(bv||'').toLowerCase()))*dir;
+}
+
+let allInvReportData=[];
+let invSortState={col:'date_submitted',dir:'desc'};
+function sortInvTableBy(col){
+  if(invSortState.col===col){
+    invSortState.dir=invSortState.dir==='asc'?'desc':'asc';
+  }else{
+    invSortState.col=col;
+    invSortState.dir='desc';
+  }
+  updateInvSortIcons();
+  const sorted=[...allInvReportData].sort((a,b)=>compareInvReport(a,b,col));
+  renderInvReportTable(sorted);
+}
+function updateInvSortIcons(){
+  const cols=['control_no','date_submitted','injured_person','accident_date','location','establishment','oh_officer'];
+  cols.forEach(c=>{
+    const el=document.getElementById(`invSortIcon-${c}`);
+    if(!el)return;
+    if(invSortState.col!==c){el.textContent='↕';return;}
+    el.textContent=invSortState.dir==='asc'?'▲':'▼';
+  });
+}
+function compareInvReport(a,b,col){
+  const dir=invSortState.dir==='asc'?1:-1;
+  if(col==='date_submitted'||col==='accident_date'){
+    const ad=String(a[col]||'').slice(0,10);
+    const bd=String(b[col]||'').slice(0,10);
+    return (ad||'').localeCompare(bd||'')*dir;
+  }
+  return (String(a[col]||'').toLowerCase().localeCompare(String(b[col]||'').toLowerCase()))*dir;
+}
+
+let allFireExtData=[];
+let fireExtSortState={col:'location',dir:'asc'};
+function sortFireExtTableBy(col){
+  if(fireExtSortState.col===col){
+    fireExtSortState.dir=fireExtSortState.dir==='asc'?'desc':'asc';
+  }else{
+    fireExtSortState.col=col;
+    fireExtSortState.dir='asc';
+  }
+  updateFireExtSortIcons();
+  const sorted=[...allFireExtData].sort((a,b)=>compareFireExt(a,b,col));
+  renderFireExtTable(sorted);
+}
+function updateFireExtSortIcons(){
+  const cols=['location','type','capacity','expiry_date','inspected_by','date_inspected'];
+  cols.forEach(c=>{
+    const el=document.getElementById(`fireExtSortIcon-${c}`);
+    if(!el)return;
+    if(fireExtSortState.col!==c){el.textContent='↕';return;}
+    el.textContent=fireExtSortState.dir==='asc'?'▲':'▼';
+  });
+}
+function compareFireExt(a,b,col){
+  const dir=fireExtSortState.dir==='asc'?1:-1;
+  if(col==='date_inspected'){
+    const ad=String(a[col]||'').slice(0,10);
+    const bd=String(b[col]||'').slice(0,10);
+    return (ad||'').localeCompare(bd||'')*dir;
+  }
+  return (String(a[col]||'').toLowerCase().localeCompare(String(b[col]||'').toLowerCase()))*dir;
+}
+
+let allFireLightData=[];
+let fireLightSortState={col:'location',dir:'asc'};
+function sortFireLightTableBy(col){
+  if(fireLightSortState.col===col){
+    fireLightSortState.dir=fireLightSortState.dir==='asc'?'desc':'asc';
+  }else{
+    fireLightSortState.col=col;
+    fireLightSortState.dir='asc';
+  }
+  updateFireLightSortIcons();
+  const sorted=[...allFireLightData].sort((a,b)=>compareFireLight(a,b,col));
+  renderFireLightTable(sorted);
+}
+function updateFireLightSortIcons(){
+  const cols=['location','designation_area','inspected_by','date_inspected'];
+  cols.forEach(c=>{
+    const el=document.getElementById(`fireLightSortIcon-${c}`);
+    if(!el)return;
+    if(fireLightSortState.col!==c){el.textContent='↕';return;}
+    el.textContent=fireLightSortState.dir==='asc'?'▲':'▼';
+  });
+}
+function compareFireLight(a,b,col){
+  const dir=fireLightSortState.dir==='asc'?1:-1;
+  if(col==='date_inspected'){
+    const ad=String(a[col]||'').slice(0,10);
+    const bd=String(b[col]||'').slice(0,10);
+    return (ad||'').localeCompare(bd||'')*dir;
+  }
+  return (String(a[col]||'').toLowerCase().localeCompare(String(b[col]||'').toLowerCase()))*dir;
+}
+
+let allFireHoseData=[];
+let fireHoseSortState={col:'location',dir:'asc'};
+function sortFireHoseTableBy(col){
+  if(fireHoseSortState.col===col){
+    fireHoseSortState.dir=fireHoseSortState.dir==='asc'?'desc':'asc';
+  }else{
+    fireHoseSortState.col=col;
+    fireHoseSortState.dir='asc';
+  }
+  updateFireHoseSortIcons();
+  const sorted=[...allFireHoseData].sort((a,b)=>compareFireHose(a,b,col));
+  renderFireHoseTable(sorted);
+}
+function updateFireHoseSortIcons(){
+  const cols=['location','inspected_by','date_inspected'];
+  cols.forEach(c=>{
+    const el=document.getElementById(`fireHoseSortIcon-${c}`);
+    if(!el)return;
+    if(fireHoseSortState.col!==c){el.textContent='↕';return;}
+    el.textContent=fireHoseSortState.dir==='asc'?'▲':'▼';
+  });
+}
+function compareFireHose(a,b,col){
+  const dir=fireHoseSortState.dir==='asc'?1:-1;
+  if(col==='date_inspected'){
+    const ad=String(a[col]||'').slice(0,10);
+    const bd=String(b[col]||'').slice(0,10);
+    return (ad||'').localeCompare(bd||'')*dir;
+  }
+  return (String(a[col]||'').toLowerCase().localeCompare(String(b[col]||'').toLowerCase()))*dir;
+}
+
+let miniSortState={hazard:{col:'date',dir:'desc'},concern:{col:'date',dir:'desc'}};
+function sortMiniTableBy(type,col){
+  const sortKey=type;
+  if(miniSortState[sortKey].col===col){
+    miniSortState[sortKey].dir=miniSortState[sortKey].dir==='asc'?'desc':'asc';
+  }else{
+    miniSortState[sortKey].col=col;
+    miniSortState[sortKey].dir='desc';
+  }
+  updateMiniSortIcons(type);
+  filterMiniTable(type);
+}
+function updateMiniSortIcons(type){
+  const isHazard=type==='hazard';
+  const prefix=isHazard?'miniHazard':'miniConcern';
+  const cols=['date','type','location','priority','status'];
+  cols.forEach(c=>{
+    const el=document.getElementById(`${prefix}SortIcon-${c}`);
+    if(!el)return;
+    const sortKey=isHazard?'hazard':'concern';
+    if(miniSortState[sortKey].col!==c){el.textContent='↕';return;}
+    el.textContent=miniSortState[sortKey].dir==='asc'?'▲':'▼';
+  });
+}
+
+let allAccData=[];
+let accSortState={col:'name',dir:'asc'};
+function sortAccTableBy(col){
+  if(accSortState.col===col){
+    accSortState.dir=accSortState.dir==='asc'?'desc':'asc';
+  }else{
+    accSortState.col=col;
+    accSortState.dir='asc';
+  }
+  updateAccSortIcons();
+  const sorted=[...allAccData].sort((a,b)=>compareAcc(a,b,col));
+  renderAccTable(sorted);
+}
+function updateAccSortIcons(){
+  const cols=['name','email','role','position','id_number'];
+  cols.forEach(c=>{
+    const el=document.getElementById(`accSortIcon-${c}`);
+    if(!el)return;
+    if(accSortState.col!==c){el.textContent='↕';return;}
+    el.textContent=accSortState.dir==='asc'?'▲':'▼';
+  });
+}
+function compareAcc(a,b,col){
+  const dir=accSortState.dir==='asc'?1:-1;
+  const mapCol={name:'full_name',position:'position',id_number:'id_number'};
+  const actualCol=mapCol[col]||col;
+  return (String(a[actualCol]||'').toLowerCase().localeCompare(String(b[actualCol]||'').toLowerCase()))*dir;
+}
+
 async function loadConcernPage(){
   initReportChart();
   try{
@@ -2153,7 +2446,7 @@ function refreshSummaryCounts(){
 let allHazardMiniData=[],allConcernMiniData=[];
 function renderMiniTable(tbodyId,items){if(tbodyId==='concernHazardMiniBody')allHazardMiniData=items||[];if(tbodyId==='concernConcernMiniBody')allConcernMiniData=items||[];renderMiniRows(tbodyId,items);}
 function renderMiniRows(tbodyId,items){const tb=document.getElementById(tbodyId);if(!items||items.length===0){tb.innerHTML=`<tr><td colspan="5" style="text-align:center;color:#bbb;font-style:italic;padding:14px;">No records found.</td></tr>`;return;}tb.innerHTML=items.map(r=>`<tr><td>${fmtDate(r.date)}</td><td>${escHtml(r._rtype||r.concern_type||'—')}</td><td>${escHtml(r.location||'—')}</td><td>${badgePriority(r.ai_priority)}</td><td>${badgeStatus(r.status)}</td></tr>`).join('');}
-function filterMiniTable(type){const isHazard=type==='hazard';const priority=document.getElementById(isHazard?'miniHazardPriority':'miniConcernPriority').value.toLowerCase();const status=document.getElementById(isHazard?'miniHazardStatus':'miniConcernStatus').value.toLowerCase();const clearBtn=document.getElementById(isHazard?'miniHazardClear':'miniConcernClear');const rawData=isHazard?allHazardMiniData:allConcernMiniData;const tbodyId=isHazard?'concernHazardMiniBody':'concernConcernMiniBody';let filtered=rawData;if(priority)filtered=filtered.filter(r=>(r.ai_priority||'low').toLowerCase()===priority);if(status)filtered=filtered.filter(r=>(r.status||'pending').toLowerCase()===status);const hasFilter=priority||status;clearBtn.style.borderColor=hasFilter?'var(--gold-dark)':'';clearBtn.style.color=hasFilter?'var(--gold-darker)':'';clearBtn.style.background=hasFilter?'var(--gold-pale)':'';clearBtn.style.fontWeight=hasFilter?'900':'';renderMiniRows(tbodyId,filtered);}
+function filterMiniTable(type){const isHazard=type==='hazard';const priority=document.getElementById(isHazard?'miniHazardPriority':'miniConcernPriority').value.toLowerCase();const status=document.getElementById(isHazard?'miniHazardStatus':'miniConcernStatus').value.toLowerCase();const clearBtn=document.getElementById(isHazard?'miniHazardClear':'miniConcernClear');const rawData=isHazard?allHazardMiniData:allConcernMiniData;const tbodyId=isHazard?'concernHazardMiniBody':'concernConcernMiniBody';let filtered=rawData;if(priority)filtered=filtered.filter(r=>(r.ai_priority||'low').toLowerCase()===priority);if(status)filtered=filtered.filter(r=>(r.status||'pending').toLowerCase()===status);const hasFilter=priority||status;clearBtn.style.borderColor=hasFilter?'var(--gold-dark)':'';clearBtn.style.color=hasFilter?'var(--gold-darker)':'';clearBtn.style.background=hasFilter?'var(--gold-pale)':'';clearBtn.style.fontWeight=hasFilter?'900':'';const sortKey=isHazard?'hazard':'concern';const col=miniSortState[sortKey].col;const dir=miniSortState[sortKey].dir;const sortedFiltered=[...filtered].sort((a,b)=>{const dirMul=dir==='asc'?1:-1;if(col==='date'){const ad=String(a.date||'').slice(0,10);const bd=String(b.date||'').slice(0,10);return (ad||'').localeCompare(bd||'')*dirMul;}if(col==='priority'){const pr=(p)=>{const v=(p||'').toLowerCase();if(v==='high')return 3;if(v==='medium')return 2;if(v==='low')return 1;return 0;};return (pr(a.ai_priority)-pr(b.ai_priority))*dirMul;}if(col==='status'){const rank=(s)=>{s=(s||'pending').toLowerCase();if(s==='pending')return 1;if(s==='resolved')return 2;if(s==='rejected')return 0;return 1;};return (rank(a.status)-rank(b.status))*dirMul;}return (String(a[col]||'').toLowerCase().localeCompare(String(b[col]||'').toLowerCase()))*dirMul;});renderMiniRows(tbodyId,sortedFiltered);}
 function clearMiniFilter(type){const isHazard=type==='hazard';document.getElementById(isHazard?'miniHazardPriority':'miniConcernPriority').value='';document.getElementById(isHazard?'miniHazardStatus':'miniConcernStatus').value='';const clearBtn=document.getElementById(isHazard?'miniHazardClear':'miniConcernClear');clearBtn.style.borderColor='';clearBtn.style.color='';clearBtn.style.background='';clearBtn.style.fontWeight='';renderMiniRows(isHazard?'concernHazardMiniBody':'concernConcernMiniBody',isHazard?allHazardMiniData:allConcernMiniData);}
 
 /* ═══ INVESTIGATION REPORT FORM ═══ */
@@ -2312,7 +2605,7 @@ function switchFileTab(tab){document.getElementById('fileTabCert').style.display
 
 /* ═══ ACCOUNT MANAGEMENT ═══ */
 let accEditId=null;
-async function loadAccounts(){try{const r=await fetch('/api/accounts');const d=await r.json();if(!r.ok)return;renderAccTable(d);}catch(e){}}
+async function loadAccounts(){try{const r=await fetch('/api/accounts');const d=await r.json();if(!r.ok)return;allAccData=d;renderAccTable(d);}catch(e){}}
 function renderAccTable(rows){const tb=document.getElementById('accTableBody');tb.innerHTML='';if(!rows||rows.length===0){tb.innerHTML=emptyRow(7,'No accounts yet.');return;}rows.forEach(r=>{tb.innerHTML+=`<tr><td>${escHtml(r.full_name||'')}</td><td>${escHtml(r.email||'')}</td><td>••••••••</td><td>${escHtml(r.role||'')}</td><td>${escHtml(r.position||'')}</td><td>${escHtml(r.id_number||'')}</td><td><div class="action-icons"><button class="action-btn edit-btn" onclick="openAccModal(${r.id},'${esc(r.full_name)}','${esc(r.email)}','${esc(r.role)}','${esc(r.position)}')" title="Edit">✏️</button><button class="action-btn del-btn" onclick="deleteAccount(${r.id})" title="Delete">🗑️</button></div></td></tr>`;});if(window.stampTableLabels)window.stampTableLabels();}
 function esc(s){return(s||'').replace(/\\/g,'\\\\').replace(/'/g,"\\'")}
 function openAccModal(id,name,email,role,position){accEditId=id||null;document.getElementById('accModalHeader').textContent=id?'EDIT ACCOUNT':'ADD ACCOUNT';document.getElementById('accPwHint').textContent=id?'(leave blank to keep current)':'(required)';document.getElementById('accName').value=name||'';document.getElementById('accEmail').value=email||'';document.getElementById('accPassword').value='';document.getElementById('accRole').value=role||'';document.getElementById('accPosition').value=position||'';document.getElementById('accModalOverlay').classList.add('open');}
@@ -2345,7 +2638,7 @@ document.addEventListener('keydown',function(e){
 function confirmLogout(e){e.preventDefault();if(confirm('Are you sure you want to logout?'))window.location.href='/logout';}
 
 /* ─── Auto-refresh every 30s ─── */
-function autoRefresh(){const activePage=document.querySelector('.page.active')?.id;if(activePage==='page-dashboard')loadDashboard();else if(activePage==='page-report')loadReportPage();else if(activePage==='page-fire')loadFirePage();else if(activePage==='page-concern')loadConcernPage();}
+function autoRefresh(){const activePage=document.querySelector('.page.active')?.id;if(activePage==='page-dashboard')loadDashboard();else if(activePage==='page-report')loadReportPage();else if(activePage==='page-fire')loadFirePage();else if(activePage==='page-concern')loadConcernPage();pollNotifications();}
 setInterval(autoRefresh,30000);
 
 /* ═══ FILE EXPIRY NOTIFICATION SYSTEM ═══ */
@@ -3303,6 +3596,155 @@ function printChart(chartId, title) {
 </html>`);
   w.document.close();
 }
+
+/* ═══ REAL-TIME NOTIFICATION SYSTEM ═══ */
+
+let _lastNotifId = '';
+let _notifPollId = null;
+
+function openNotifPanel() {
+  const panel = document.getElementById('notifPanel');
+  if (panel) {
+    panel.classList.toggle('open');
+    loadNotifications();
+  }
+}
+
+function closeNotifPanel(e) {
+  if (e && e.target.id !== 'notifPanel') return;
+  const panel = document.getElementById('notifPanel');
+  if (panel) panel.classList.remove('open');
+}
+
+async function loadNotifications() {
+  try {
+    const res = await fetch(`${API}/notifications`);
+    const data = await res.json();
+    let notifs = data.notifications || [];
+    try {
+      const fRes = await fetch(`${API}/fire-protection/inspections`);
+      const fData = await fRes.json();
+      if (fData.success) notifs = [...notifs, ...makeFireExtinguisherExpiryAlerts(fData.inspections || [])];
+    } catch (e) {}
+    const visible = (notifs || []).filter(dashboardAlertFilter);
+    renderNotifications(visible);
+  } catch (e) {
+    console.error('Failed to load notifications:', e);
+  }
+}
+
+function renderNotifications(notifs) {
+  const body = document.getElementById('notifPanelBody');
+  const visible = (notifs || []).filter(dashboardAlertFilter);
+  if (!visible || visible.length === 0) {
+    body.innerHTML = '<div class="notif-empty">No notifications</div>';
+    return;
+  }
+  
+  body.innerHTML = visible.slice(0, 15).map(n => {
+    const severity = (n.severity || 'low').toLowerCase();
+    const badgeClass = severity === 'high' ? 'notif-badge-high' : 
+                       severity === 'medium' ? 'notif-badge-medium' : 'notif-badge-low';
+    const badgeText = severity.toUpperCase();
+    const timeAgo = getTimeAgo(n.date);
+    
+    return `<div class="notif-item">
+      <div class="notif-item-message">${escHtml(n.message || '—')}</div>
+      <div class="notif-item-details">
+        <span class="${badgeClass}">${badgeText}</span>
+        <span>•</span>
+        <span>${timeAgo}</span>
+        ${n.location ? `<span>•</span><span>${escHtml(n.location)}</span>` : ''}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+async function pollNotifications() {
+  try {
+    const res = await fetch(`${API}/notifications`);
+    const data = await res.json();
+    let notifs = data.notifications || [];
+    try {
+      const fRes = await fetch(`${API}/fire-protection/inspections`);
+      const fData = await fRes.json();
+      if (fData.success) notifs = [...notifs, ...makeFireExtinguisherExpiryAlerts(fData.inspections || [])];
+    } catch (e) {}
+    
+    const visible = (notifs || []).filter(dashboardAlertFilter).sort((a,b)=>String(b.date||'').localeCompare(String(a.date||'')));
+    renderNotifications(visible);
+    
+    if (visible.length === 0) {
+      const dot = document.getElementById('notifBellDot');
+      if (dot) dot.classList.remove('has-notif');
+      return;
+    }
+    
+    const latestNotif = visible[0];
+    const latestId = String(latestNotif.id || '');
+    
+    if (latestId !== _lastNotifId) {
+      _lastNotifId = latestId;
+      
+      const dot = document.getElementById('notifBellDot');
+      if (dot) dot.classList.add('has-notif');
+      
+      showNotificationToast(latestNotif);
+    }
+  } catch (e) {
+    console.error('Notification polling failed:', e);
+  }
+}
+
+function showNotificationToast(notif) {
+  const severity = (notif.severity || 'low').toLowerCase();
+  const container = document.body;
+  
+  const toast = document.createElement('div');
+  toast.className = `notif-toast ${severity}`;
+  toast.innerHTML = `
+    <div class="notif-toast-title">New ${severity.toUpperCase()} Priority Report</div>
+    <div class="notif-toast-message">${escHtml(notif.message || 'New report submitted')}</div>
+  `;
+  
+  container.appendChild(toast);
+  
+  // Auto-remove toast after 6 seconds
+  setTimeout(() => {
+    toast.style.animation = 'slideInRight .3s ease reverse';
+    setTimeout(() => toast.remove(), 300);
+  }, 6000);
+}
+
+function getTimeAgo(dateStr) {
+  if (!dateStr) return 'just now';
+  
+  try {
+    const date = new Date(dateStr);
+    const now = new Date();
+    const diffMs = now - date;
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMs / 3600000);
+    const diffDays = Math.floor(diffMs / 86400000);
+    
+    if (diffMins < 1) return 'just now';
+    if (diffMins < 60) return `${diffMins}m ago`;
+    if (diffHours < 24) return `${diffHours}h ago`;
+    if (diffDays < 7) return `${diffDays}d ago`;
+    
+    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  } catch (e) {
+    return 'recently';
+  }
+}
+
+// Start notification polling on page load
+document.addEventListener('DOMContentLoaded', function() {
+  setTimeout(() => {
+    pollNotifications();
+    setInterval(pollNotifications, 15000); // Poll every 15 seconds
+  }, 1000);
+});
 </script>
 
 </html>

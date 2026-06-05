@@ -168,6 +168,28 @@ def create_concern():
         )
         mysql.connection.commit()
         new_id = cur.lastrowid
+        
+        # Create notification for admin when report is submitted
+        try:
+            notification_msg = f"New {report_type}: {concern_desc[:60] or hazard_desc[:60] or 'Report submitted'}"
+            notification_severity = 'high' if risk_level.lower() == 'high' else 'medium' if risk_level.lower() == 'medium' else 'low'
+            cur = mysql.connection.cursor()
+            cur.execute(
+                """INSERT INTO notifications (`date`, severity, message, location, user_id)
+                   VALUES (%s, %s, %s, %s, %s)""",
+                (
+                    report_date,
+                    notification_severity,
+                    notification_msg,
+                    incident_location,
+                    session.get("user_id"),
+                ),
+            )
+            mysql.connection.commit()
+            cur.close()
+        except Exception as notif_err:
+            pass  # Don't fail the main request if notification fails
+        
         cur.close()
     except Exception as e:
         return jsonify({"success": False, "error": str(e)}), 500

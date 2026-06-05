@@ -156,18 +156,25 @@ def create_hazard():
         )
         mysql.connection.commit()
         new_id = cur.lastrowid
-        if ai_priority == "High":
+        
+        # Create notification for admin when hazard is reported
+        try:
+            notification_severity = 'high' if ai_priority == 'High' else 'medium' if ai_priority == 'Medium' else 'low'
+            notification_msg = f"New Hazard Report: {main_hazard_type or description[:60]}"
             cur.execute(
                 """INSERT INTO notifications (`date`, severity, message, location, user_id)
-                           VALUES (%s,'high',%s,%s,%s)""",
+                   VALUES (%s, %s, %s, %s, %s)""",
                 (
                     report_date,
-                    f"High-priority hazard: {main_hazard_type or description[:60]}",
+                    notification_severity,
+                    notification_msg,
                     location,
                     session.get("user_id"),
                 ),
             )
             mysql.connection.commit()
+        except Exception as notif_err:
+            pass  # Don't fail the main request if notification fails
         cur.close()
     except Exception as e:
         return jsonify({"success": False, "error": str(e)}), 500
