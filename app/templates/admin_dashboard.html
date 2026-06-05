@@ -431,6 +431,16 @@
     .concern-filter-active-indicator.visible{display:flex;}
     .concern-filter-active-indicator button{background:none;border:none;cursor:pointer;font-size:.75rem;color:var(--gold-darker);padding:0 2px;line-height:1;}
     .concern-results-count{font-size:.72rem;font-weight:800;color:var(--text-muted);margin-bottom:6px;padding:0 2px;min-height:18px;}
+    .concern-pagination{display:none;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-top:12px;padding-top:12px;border-top:1.5px solid var(--gold-pale);}
+    .concern-pagination.visible{display:flex;}
+    .concern-page-status{font-size:.74rem;font-weight:900;color:var(--text-muted);white-space:nowrap;}
+    .concern-page-controls{display:flex;align-items:center;justify-content:flex-end;gap:5px;flex-wrap:wrap;}
+    .concern-page-btn{min-width:34px;height:32px;border:1.5px solid var(--gold-pale);border-radius:8px;background:var(--white);color:var(--text-dark);font-family:'Nunito',sans-serif;font-size:.76rem;font-weight:900;cursor:pointer;transition:background .15s,border-color .15s,color .15s;}
+    .concern-page-btn:hover:not(:disabled){background:var(--gold-pale);border-color:var(--gold-dark);}
+    .concern-page-btn.active{background:var(--gold);border-color:var(--gold-dark);color:var(--text-dark);}
+    .concern-page-btn:disabled{opacity:.45;cursor:not-allowed;}
+    .concern-page-btn.prev-next{width:auto;padding:0 12px;}
+    .concern-page-ellipsis{min-width:20px;text-align:center;font-size:.78rem;font-weight:900;color:var(--text-muted);}
 
     /* ── Settings Page Styles ── */
     .settings-card{background:var(--white);border-radius:14px;padding:22px 24px;margin-bottom:22px;box-shadow:var(--shadow);}
@@ -636,6 +646,11 @@
       .area-chip{font-size:.70rem;padding:4px 10px;white-space:normal;}
       .concern-filter-active-indicator{white-space:normal;}
       .dash-area-filter-label{white-space:normal;}
+      .concern-pagination{align-items:stretch;justify-content:center;gap:8px;}
+      .concern-page-status{width:100%;text-align:center;white-space:normal;}
+      .concern-page-controls{width:100%;justify-content:center;}
+      .concern-page-btn{min-width:32px;height:31px;font-size:.72rem;}
+      .concern-page-btn.prev-next{flex:1 1 92px;max-width:120px;}
 
       /* Section padding */
       .section-box{padding:12px 12px 14px;}
@@ -1495,6 +1510,10 @@
         </tr></thead>
         <tbody id="concernTableBody"><tr class="empty-row"><td colspan="10" style="text-align:center;color:#bbb;font-style:italic;padding:20px;">Loading…</td></tr></tbody>
       </table>
+      <div class="concern-pagination" id="concernPagination" aria-label="Concern report pagination">
+        <div class="concern-page-status" id="concernPageStatus"></div>
+        <div class="concern-page-controls" id="concernPageControls"></div>
+      </div>
     </div>
     <div class="concern-status-section">
       <div class="concern-status-title">Status Breakdown</div>
@@ -1910,6 +1929,8 @@ function exportFireExcel(){
 
 /* ═══ CONCERN PAGE ═══ */
 let allConcernData=[];
+let concernPaginationState={currentPage:1,totalPages:1,itemsPerPage:15,totalItems:0};
+let concernFilteredData=[];
 function filterConcernTable(){applyAllConcernFilters();}
 let concernSortState={col:'date',dir:'desc'};
 function sortPriorityRank(p){const v=(p||'').toLowerCase();if(v==='high')return 3;if(v==='medium')return 2;if(v==='low')return 1;return 0;}
@@ -1983,7 +2004,7 @@ function sortConcernItems(items){
   return arr;
 }
 
-function applyAllConcernFilters(){
+function applyAllConcernFilters(resetPage=true){
   const type=document.getElementById('cncFilterType')?.value||'';
   const stat=document.getElementById('cncFilterStatus')?.value||'';
   const priority=document.getElementById('cncFilterPriority')?.value||'';
@@ -2005,7 +2026,7 @@ function applyAllConcernFilters(){
   const countEl=document.getElementById('concernResultsCount');
   if(parts.length>0){countEl.textContent=`Showing ${filtered.length} of ${allConcernData.length} report${allConcernData.length!==1?'s':''}`;}else{countEl.textContent='';}
   filtered=sortConcernItems(filtered);
-  renderConcernTable(filtered);
+  renderConcernTable(filtered,resetPage);
 }
 
 function sortConcernTableBy(col){setConcernSort(col);}
@@ -2016,7 +2037,7 @@ function resetAllConcernFilters(){
   if(document.getElementById('cncFilterArea'))document.getElementById('cncFilterArea').value='';
   document.getElementById('concernFilterActiveIndicator').classList.remove('visible');
   document.getElementById('concernResultsCount').textContent='';
-  renderConcernTable(allConcernData);
+  applyAllConcernFilters(true);
 }
 
 /* ═══ SORTING FOR ALL TABLES ═══ */
@@ -2303,7 +2324,7 @@ async function loadConcernPage(){
     document.getElementById('rpt-hazard-count').textContent=hazards.length;
     document.getElementById('rpt-concern-count').textContent=concerns.length;
     refreshSummaryCounts();
-    applyAllConcernFilters();
+    applyAllConcernFilters(false);
     renderMiniTable('concernHazardMiniBody',hazards);
     renderMiniTable('concernConcernMiniBody',concerns);
     
@@ -2329,15 +2350,61 @@ async function loadConcernPage(){
   }catch(e){console.error('concern page',e);}
 }
 function buildPhotoSection(photoFilename){if(!photoFilename)return'';const url='/uploads/'+photoFilename;return`<div class="rpt-sec"><div class="rpt-sec-ttl">Submitted Photo</div><div class="rpt-photo-wrap"><img src="${url}" alt="Submitted photo" onclick="openLightbox('${url}')" title="Click to view full size"><div class="rpt-photo-caption">Click image to enlarge</div></div></div>`;}
-function renderConcernTable(items){
+function getConcernPageNumbers(totalPages,currentPage){
+  if(totalPages<=7)return Array.from({length:totalPages},(_,i)=>i+1);
+  const pages=[1];
+  const start=Math.max(2,currentPage-1);
+  const end=Math.min(totalPages-1,currentPage+1);
+  if(start>2)pages.push('ellipsis-start');
+  for(let p=start;p<=end;p++)pages.push(p);
+  if(end<totalPages-1)pages.push('ellipsis-end');
+  pages.push(totalPages);
+  return pages;
+}
+function renderConcernPagination(){
+  const wrap=document.getElementById('concernPagination');
+  const status=document.getElementById('concernPageStatus');
+  const controls=document.getElementById('concernPageControls');
+  if(!wrap||!status||!controls)return;
+  const {currentPage,totalPages,itemsPerPage,totalItems}=concernPaginationState;
+  if(totalItems<=itemsPerPage){wrap.classList.remove('visible');status.textContent='';controls.innerHTML='';return;}
+  const start=((currentPage-1)*itemsPerPage)+1;
+  const end=Math.min(currentPage*itemsPerPage,totalItems);
+  wrap.classList.add('visible');
+  status.textContent=`Page ${currentPage} of ${totalPages} · Showing ${start}-${end} of ${totalItems}`;
+  const pageButtons=getConcernPageNumbers(totalPages,currentPage).map(page=>{
+    if(typeof page==='string')return `<span class="concern-page-ellipsis">...</span>`;
+    return `<button type="button" class="concern-page-btn ${page===currentPage?'active':''}" onclick="goToConcernPage(${page})" ${page===currentPage?'aria-current="page"':''}>${page}</button>`;
+  }).join('');
+  controls.innerHTML=`<button type="button" class="concern-page-btn prev-next" onclick="goToConcernPage(${currentPage-1})" ${currentPage<=1?'disabled':''}>Previous</button>${pageButtons}<button type="button" class="concern-page-btn prev-next" onclick="goToConcernPage(${currentPage+1})" ${currentPage>=totalPages?'disabled':''}>Next</button>`;
+}
+function goToConcernPage(page){
+  const next=Math.min(Math.max(1,Number(page)||1),concernPaginationState.totalPages||1);
+  if(next===concernPaginationState.currentPage)return;
+  concernPaginationState.currentPage=next;
+  renderConcernTable(concernFilteredData,false);
+}
+function renderConcernTable(items,resetPage=true){
   const tb=document.getElementById('concernTableBody');
-  if(!items||items.length===0){tb.innerHTML=`<tr><td colspan="10" style="text-align:center;color:#bbb;font-style:italic;padding:28px;">No reports match the current filter.<br><span style="font-size:.70rem;">Try clearing some filters.</span></td></tr>`;return;}
-  tb.innerHTML=items.map((r,i)=>{
+  concernFilteredData=[...(items||[])];
+  concernPaginationState.totalItems=concernFilteredData.length;
+  concernPaginationState.totalPages=Math.max(1,Math.ceil(concernPaginationState.totalItems/concernPaginationState.itemsPerPage));
+  if(resetPage)concernPaginationState.currentPage=1;
+  concernPaginationState.currentPage=Math.min(Math.max(1,concernPaginationState.currentPage),concernPaginationState.totalPages);
+  if(!concernFilteredData.length){
+    tb.innerHTML=`<tr><td colspan="10" style="text-align:center;color:#bbb;font-style:italic;padding:28px;">No reports match the current filter.<br><span style="font-size:.70rem;">Try clearing some filters.</span></td></tr>`;
+    renderConcernPagination();
+    return;
+  }
+  const start=(concernPaginationState.currentPage-1)*concernPaginationState.itemsPerPage;
+  const pageItems=concernFilteredData.slice(start,start+concernPaginationState.itemsPerPage);
+  tb.innerHTML=pageItems.map((r,i)=>{
     const photo=r.photo_filename||'';
     const imgTd=photo?`<td><img class="img-thumb" src="/uploads/${escHtml(photo)}" alt="photo" onclick="openLightbox('/uploads/${escHtml(photo)}')" title="Click to enlarge"></td>`:`<td><span class="no-img-cell">—</span></td>`;
     const ehsTd=`<td style="font-weight:800;color:var(--gold-darker);font-size:.78rem;">${escHtml(r.ehs_officer||'—')}</td>`;
     return`<tr data-rtype="${r._rtype}" data-status="${r.status||'pending'}"><td>${fmtDate(r.date)}</td><td>${fmtTime(r.time)}</td><td>${escHtml(r._rtype)}</td><td>${escHtml(r.reported_by||'—')}</td><td>${escHtml(r.location||'—')}</td><td>${badgePriority(r.ai_priority)}</td><td>${badgeStatus(r.status)}</td>${ehsTd}${imgTd}<td><div class="action-icons"><button class="action-btn view-btn" title="View" onclick="viewConcernRow(${allConcernData.indexOf(r)})">👁</button><button class="action-btn edit-btn" title="Edit Status" onclick="openStatusModal(${allConcernData.indexOf(r)})">✏️</button></div></td></tr>`;
   }).join('');
+  renderConcernPagination();
   if(window.stampTableLabels)window.stampTableLabels();
 }
 function viewConcernRow(idx){
@@ -2425,7 +2492,7 @@ async function submitStatusUpdate(){
     if(result.resolved_at !== undefined) allConcernData[statusModalIdx].resolved_at=result.resolved_at;
     if(result.duration    !== undefined) allConcernData[statusModalIdx].duration=result.duration;
     document.getElementById('statusModalOverlay').classList.remove('open');
-    applyAllConcernFilters();refreshSummaryCounts();showToast('Status updated!','#2e7d32');
+    applyAllConcernFilters(false);refreshSummaryCounts();showToast('Status updated!','#2e7d32');
   }catch(e){showToast('Network error','#c62828');}
 }
 
