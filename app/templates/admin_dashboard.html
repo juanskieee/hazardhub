@@ -2070,7 +2070,8 @@ function compareDashReport(a,b,col){
 let allDashNotifData=[];
 let dashNotifSortState={col:'date',dir:'desc'};
 function dashboardAlertFilter(notif){
-  return true;
+  const severity=(notif.severity||'').toLowerCase();
+  return severity==='high' || notif.fireExpiryAlert===true;
 }
 function sortDashNotifTableBy(col){
   if(dashNotifSortState.col===col){
@@ -3625,8 +3626,7 @@ async function loadNotifications() {
       const fData = await fRes.json();
       if (fData.success) notifs = [...notifs, ...makeFireExtinguisherExpiryAlerts(fData.inspections || [])];
     } catch (e) {}
-    const visible = (notifs || []).filter(dashboardAlertFilter);
-    renderNotifications(visible);
+    renderNotifications(notifs);
   } catch (e) {
     console.error('Failed to load notifications:', e);
   }
@@ -3634,7 +3634,7 @@ async function loadNotifications() {
 
 function renderNotifications(notifs) {
   const body = document.getElementById('notifPanelBody');
-  const visible = (notifs || []).filter(dashboardAlertFilter);
+  const visible = notifs || [];
   if (!visible || visible.length === 0) {
     body.innerHTML = '<div class="notif-empty">No notifications</div>';
     return;
@@ -3670,16 +3670,17 @@ async function pollNotifications() {
       if (fData.success) notifs = [...notifs, ...makeFireExtinguisherExpiryAlerts(fData.inspections || [])];
     } catch (e) {}
     
-    const visible = (notifs || []).filter(dashboardAlertFilter).sort((a,b)=>String(b.date||'').localeCompare(String(a.date||'')));
-    renderNotifications(visible);
+    renderNotifications(notifs);
     
-    if (visible.length === 0) {
+    const alertItems = (notifs || []).filter(dashboardAlertFilter).sort((a,b)=>String(b.date||'').localeCompare(String(a.date||'')));
+    
+    if (alertItems.length === 0) {
       const dot = document.getElementById('notifBellDot');
       if (dot) dot.classList.remove('has-notif');
       return;
     }
     
-    const latestNotif = visible[0];
+    const latestNotif = alertItems[0];
     const latestId = String(latestNotif.id || '');
     
     if (latestId !== _lastNotifId) {
