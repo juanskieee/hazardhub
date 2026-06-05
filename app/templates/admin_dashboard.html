@@ -2070,8 +2070,7 @@ function compareDashReport(a,b,col){
 let allDashNotifData=[];
 let dashNotifSortState={col:'date',dir:'desc'};
 function dashboardAlertFilter(notif){
-  const severity=(notif.severity||'').toLowerCase();
-  return severity==='high' || notif.fireExpiryAlert===true;
+  return true;
 }
 function sortDashNotifTableBy(col){
   if(dashNotifSortState.col===col){
